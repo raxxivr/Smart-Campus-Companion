@@ -49,8 +49,71 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text ("Login Scrreen")
+
+            AppLogo()
+
+            Spacer(modifier = Modifier.height(48.dp))
+
+            WelcomeSection()
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+
         }
     }
 }
+
+@Composable
+private fun AppLogo(){
+    Surface(
+        modifier = Modifier.size(100.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+
+        Box(
+            contentAlignment = Alignment. Center,
+            modifier = Modifier.fillMaxSize()
+        ){
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Smart Campus Logo",
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun WelcomeSection() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Welcome Back!",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Sign in to continue to Smart Campus",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun LoginScreenPreview(){
+    MaterialTheme {
+        LoginScreen()
+    }
+}
+
 
