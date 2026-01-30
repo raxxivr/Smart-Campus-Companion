@@ -58,6 +58,27 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
+            UsernameField(
+                value = username,
+                onValueChange = { username = it },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PasswordField(
+                value = password,
+                onValueChange = { password = it },
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
+                onDone = {
+                    focusManager.clearFocus()
+                    if (username.isNotBlank() && password.isNotBlank()) {
+                        onLoginClick(username, password)
+                    }
+                }
+            )
+
 
         }
     }
@@ -107,6 +128,89 @@ private fun WelcomeSection() {
     }
 }
 
+@Composable
+private fun UsernameField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onNext: () -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Username") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Username Icon"
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        )
+    )
+}
+
+@Composable
+private fun PasswordField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    passwordVisible: Boolean,
+    onPasswordVisibilityToggle: () -> Unit,
+    onDone: () -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Password") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = "Password Icon"
+            )
+        },
+        trailingIcon = {
+            IconButton(onClick = onPasswordVisibilityToggle) {
+                Text(
+                    text = if (passwordVisible) "HIDE" else "SHOW",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        visualTransformation = if (passwordVisible)
+            VisualTransformation.None
+        else
+            PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { onDone() }
+        ),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        )
+    )
+}
+
+
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
@@ -115,5 +219,4 @@ fun LoginScreenPreview(){
         LoginScreen()
     }
 }
-
 
