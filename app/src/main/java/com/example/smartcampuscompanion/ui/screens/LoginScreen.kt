@@ -92,7 +92,7 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-
+            SignUpSection()
         }
     }
 }
@@ -264,7 +264,26 @@ private fun LoginButton(
     }
 }
 
-
+@Composable
+private fun SignUpSection() {
+    Row(
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Don't have an account?",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+        )
+        TextButton(onClick = { }) {
+            Text(
+                text = "Sign Up",
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
 
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
