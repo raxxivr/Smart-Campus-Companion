@@ -79,6 +79,19 @@ fun LoginScreen(
                 }
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ForgotPasswordButton(onClick = onForgotPasswordClick)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            LoginButton(
+                onClick = { onLoginClick(username, password) },
+                enabled = username.isNotBlank() && password.isNotBlank()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
 
         }
     }
@@ -210,6 +223,47 @@ private fun PasswordField(
     )
 }
 
+@Composable
+private fun ForgotPasswordButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        TextButton(onClick = onClick){
+            Text(
+                text = "Forgot Password?",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoginButton(
+    onClick: () -> Unit,
+    enabled: Boolean
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Text(
+            text = "Login",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
 
 
 @Preview(showBackground = true, showSystemUi = true)
@@ -220,3 +274,10 @@ fun LoginScreenPreview(){
     }
 }
 
+@Preview(showBackground = true, showSystemUi = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
+@Composable
+fun LoginScreenDarkPreview() {
+    MaterialTheme{
+        LoginScreen()
+    }
+}
