@@ -11,7 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 
 @Composable
 fun DashboardScreen(modifier: Modifier = Modifier) {
@@ -52,5 +54,13 @@ fun DashboardButton(text: String, icon: ImageVector, onClick: () -> Unit) {
         Icon(imageVector = icon, contentDescription = null)
         Spacer(modifier = Modifier.width(12.dp))
         Text(text = text, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun DashboardScreenPreview() {
+    SmartCampusCompanionTheme {
+        DashboardScreen()
     }
 }
