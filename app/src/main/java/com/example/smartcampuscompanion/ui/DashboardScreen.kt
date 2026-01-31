@@ -16,13 +16,34 @@ fun DashboardScreen() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
+        Spacer(modifier = Modifier.height(32.dp))
+        
         Text(
             text = "Welcome, Student!",
             style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.padding(bottom = 24.dp)
+            modifier = Modifier.padding(bottom = 32.dp)
         )
         
-        // Placeholder for navigation menu
-        Text(text = "Dashboard Menu Coming Soon")
+        // Navigation Menu
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            DashboardButton(text = "Campus Information") { /* Navigate */ }
+            DashboardButton(text = "Academic Tasks & Schedules") { /* Navigate */ }
+            DashboardButton(text = "Campus Announcements") { /* Navigate */ }
+            DashboardButton(text = "Personal Settings") { /* Navigate */ }
+        }
+    }
+}
+
+@Composable
+fun DashboardButton(text: String, onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.medium
+    ) {
+        Text(text = text)
     }
 }
