@@ -2,21 +2,23 @@ package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier) {
+fun DashboardScreen(
+    username: String?,
+    onLogoutClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -24,11 +26,28 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Top
     ) {
-        Spacer(modifier = Modifier.height(48.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onLogoutClick) {
+                Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Logout")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
         
         Text(
-            text = "Welcome to Smart Campus",
+            text = "Welcome, ${username ?: "Student"}!",
             style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "Smart Campus Companion",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.secondary,
             modifier = Modifier.padding(bottom = 48.dp)
         )
         
@@ -61,6 +80,6 @@ fun DashboardButton(text: String, icon: ImageVector, onClick: () -> Unit) {
 @Composable
 fun DashboardScreenPreview() {
     SmartCampusCompanionTheme {
-        DashboardScreen()
+        DashboardScreen(username = "John Doe", onLogoutClick = {})
     }
 }
