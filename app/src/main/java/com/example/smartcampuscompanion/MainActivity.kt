@@ -56,10 +56,12 @@ class MainActivity : ComponentActivity() {
             val loginError by viewModel.loginError
             val isLoading by viewModel.isLoading
 
+            // Determine which screen to show first (login or dashboard)
             val startDestination = remember {
                 if (sessionManager.isLoggedIn()) "dashboard" else "login"
             }
 
+            // React to login state changes
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
                     navController.navigate("dashboard") {
