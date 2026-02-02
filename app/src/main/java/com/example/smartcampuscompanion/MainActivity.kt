@@ -38,8 +38,12 @@ class MainActivity : ComponentActivity() {
             // Get the current context
             val context = LocalContext.current
 
+
+            // Create and remember SessionManager for login state handling
             val sessionManager = remember { SessionManager(context) }
 
+
+            // Initialize LoginViewModel using a custom factory
             val viewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager)
             )
