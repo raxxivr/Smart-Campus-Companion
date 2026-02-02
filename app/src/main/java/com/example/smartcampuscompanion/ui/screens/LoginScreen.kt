@@ -1,6 +1,7 @@
 package com.example.smartcampuscompanion.ui.screens
 
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -13,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -100,21 +103,30 @@ fun LoginScreen(
 
 @Composable
 private fun AppLogo(){
+    val gradient = Brush.verticalGradient(
+        colors = listOf(
+            Color(0xFF7FFFD4),
+            Color(0xFF00CED1),
+            Color(0xFF008B8B)
+        )
+    )
+
     Surface(
         modifier = Modifier.size(100.dp),
         shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.primaryContainer
+        color = Color.Transparent
     ) {
-
         Box(
-            contentAlignment = Alignment. Center,
-            modifier = Modifier.fillMaxSize()
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(gradient)
         ){
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Smart Campus Logo",
                 modifier = Modifier.size(60.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = Color.White
             )
         }
     }
