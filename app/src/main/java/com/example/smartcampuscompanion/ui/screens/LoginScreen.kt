@@ -1,5 +1,6 @@
 package com.example.smartcampuscompanion.ui.screens
 
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -49,12 +50,220 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text ("Login Screen")
+
+            AppLogo()
+
+            Spacer(modifier = Modifier.height(64.dp))
+
+            WelcomeSection()
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            UsernameField(
+                value = username,
+                onValueChange = { username = it },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            PasswordField(
+                value = password,
+                onValueChange = { password = it },
+                passwordVisible = passwordVisible,
+                onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
+                onDone = {
+                    focusManager.clearFocus()
+                    if (username.isNotBlank() && password.isNotBlank()) {
+                        onLoginClick(username, password)
+                    }
+                }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            ForgotPasswordButton(onClick = onForgotPasswordClick)
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            LoginButton(
+                onClick = { onLoginClick(username, password) },
+                enabled = username.isNotBlank() && password.isNotBlank()
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
             SignUpSection()
         }
     }
 }
 
+@Composable
+private fun AppLogo(){
+    Surface(
+        modifier = Modifier.size(100.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.primaryContainer
+    ) {
+
+        Box(
+            contentAlignment = Alignment. Center,
+            modifier = Modifier.fillMaxSize()
+        ){
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Smart Campus Logo",
+                modifier = Modifier.size(60.dp),
+                tint = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+}
+
+
+@Composable
+private fun WelcomeSection() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "Welcome Back!",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Sign in to continue to Smart Campus",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
+            textAlign = TextAlign.Center
+        )
+    }
+}
+
+@Composable
+private fun UsernameField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onNext: () -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Username") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = "Username Icon"
+            )
+        },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Text,
+            imeAction = ImeAction.Next
+        ),
+        keyboardActions = KeyboardActions(
+            onNext = { onNext() }
+        ),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        )
+    )
+}
+
+@Composable
+private fun PasswordField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    passwordVisible: Boolean,
+    onPasswordVisibilityToggle: () -> Unit,
+    onDone: () -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text("Password") },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = "Password Icon"
+            )
+        },
+        trailingIcon = {
+            IconButton(onClick = onPasswordVisibilityToggle) {
+                Text(
+                    text = if (passwordVisible) "HIDE" else "SHOW",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+        },
+        visualTransformation = if (passwordVisible)
+            VisualTransformation.None
+        else
+            PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { onDone() }
+        ),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+        )
+    )
+}
+
+@Composable
+private fun ForgotPasswordButton(onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.End
+    ) {
+        TextButton(onClick = onClick){
+            Text(
+                text = "Forgot Password?",
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoginButton(
+    onClick: () -> Unit,
+    enabled: Boolean
+) {
+    Button(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp),
+        shape = RoundedCornerShape(12.dp),
+        enabled = enabled,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary
+        )
+    ) {
+        Text(
+            text = "Login",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
 
 @Composable
 private fun SignUpSection() {
