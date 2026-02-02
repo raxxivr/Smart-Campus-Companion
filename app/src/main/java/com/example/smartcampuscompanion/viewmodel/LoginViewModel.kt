@@ -17,8 +17,12 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
         get() = sessionManager.getUsername()
 
     fun login(username: String, password: String) {
-        if (username == "student" && password == "1234") {
-            sessionManager.createLoginSession(username)
+        // Gumamit ng .trim() para tanggalin ang extra spaces sa unahan o hulihan
+        val trimmedUsername = username.trim()
+        val trimmedPassword = password.trim()
+
+        if (trimmedUsername == "student" && trimmedPassword == "1234") {
+            sessionManager.createLoginSession(trimmedUsername)
             _isLoggedIn.value = true
             _loginError.value = null
         } else {
