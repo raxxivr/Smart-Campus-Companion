@@ -1,7 +1,10 @@
 package com.example.smartcampuscompanion.ui.screens
 
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -14,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
@@ -101,6 +105,7 @@ fun LoginScreen(
     }
 }
 
+
 @Composable
 private fun AppLogo(){
     val gradient = Brush.verticalGradient(
@@ -158,8 +163,15 @@ private fun WelcomeSection() {
 private fun UsernameField(
     value: String,
     onValueChange: (String) -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    isFocused: Boolean = false
 ) {
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
+        animationSpec = tween(300),
+        label = "borderColor"
+    )
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -167,10 +179,13 @@ private fun UsernameField(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Person,
-                contentDescription = "Username Icon"
+                contentDescription = "Username Icon",
+                tint = Color(0xFF00CED1)
             )
         },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
@@ -181,8 +196,10 @@ private fun UsernameField(
         ),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            focusedBorderColor = Color(0xFF00CED1),
+            unfocusedBorderColor = Color(0xFFB0BEC5),
+            focusedLabelColor = Color(0xFF00CED1),
+            cursorColor = Color(0xFF00CED1)
         )
     )
 }
@@ -193,8 +210,16 @@ private fun PasswordField(
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
     onPasswordVisibilityToggle: () -> Unit,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    isFocused: Boolean = false,
+    onFocusChanged: (Boolean) -> Unit = {}
 ) {
+    val borderColor by animateColorAsState(
+        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
+        animationSpec = tween(300),
+        label = "borderColor"
+    )
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -202,7 +227,8 @@ private fun PasswordField(
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Lock,
-                contentDescription = "Password Icon"
+                contentDescription = "Password Icon",
+                tint = Color(0xFF00CED1)
             )
         },
         trailingIcon = {
@@ -210,8 +236,8 @@ private fun PasswordField(
                 Text(
                     text = if (passwordVisible) "HIDE" else "SHOW",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
+                    color = Color(0xFF00CED1),
+                    fontWeight = FontWeight.Bold
                 )
             }
         },
@@ -219,7 +245,12 @@ private fun PasswordField(
             VisualTransformation.None
         else
             PasswordVisualTransformation(),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
+            .onFocusChanged { focusState ->
+                onFocusChanged(focusState.isFocused)
+            },
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -230,8 +261,14 @@ private fun PasswordField(
         ),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = MaterialTheme.colorScheme.primary,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            focusedBorderColor = Color(0xFF00CED1),
+            unfocusedBorderColor = Color(0xFFB0BEC5),
+            focusedLabelColor = Color(0xFF00CED1),
+            cursorColor = Color(0xFF00CED1),
+            focusedLeadingIconColor = Color(0xFF00CED1),
+            unfocusedLeadingIconColor = Color(0xFF78909C),
+            focusedContainerColor = Color(0xFFE0F7FA).copy(alpha = 0.3f),
+            unfocusedContainerColor = Color.White
         )
     )
 }
@@ -242,11 +279,12 @@ private fun ForgotPasswordButton(onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.End
     ) {
-        TextButton(onClick = onClick){
+        TextButton(onClick = onClick) {
             Text(
                 text = "Forgot Password?",
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 14.sp
+                color = Color(0xFF00CED1),
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium
             )
         }
     }
@@ -265,14 +303,23 @@ private fun LoginButton(
         shape = RoundedCornerShape(12.dp),
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary
+            containerColor = Color(0xFF008B8B),
+            contentColor = Color.White,
+            disabledContainerColor = Color(0xFF00CED1),
+            disabledContentColor = Color(0xFFE0F7FA)
+        ),
+        elevation = ButtonDefaults.buttonElevation(
+            defaultElevation = 4.dp,
+            pressedElevation = 8.dp,
+            disabledElevation = 0.dp
         )
     ) {
         Text(
             text = "Login",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 18.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 1.sp,
+            //color = Color(0xFF000000)
         )
     }
 }
@@ -286,13 +333,13 @@ private fun SignUpSection() {
         Text(
             text = "Don't have an account?",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f)
+            color = Color(0xFF008B8B).copy(alpha = 0.7f)
         )
         TextButton(onClick = { }) {
             Text(
                 text = "Sign Up",
-                color = MaterialTheme.colorScheme.primary,
-                fontWeight = FontWeight.SemiBold
+                color = Color(0xFF00CED1),
+                fontWeight = FontWeight.Bold
             )
         }
     }
