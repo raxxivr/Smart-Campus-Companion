@@ -1,4 +1,4 @@
-package com.example.smartcampuscompanion
+package com.example.smartcampuscompanion.ui.screens
 
 
 import androidx.compose.foundation.background
