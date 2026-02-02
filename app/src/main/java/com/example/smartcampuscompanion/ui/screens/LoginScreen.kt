@@ -345,6 +345,7 @@ private fun SignUpSection() {
     }
 }
 
+
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun LoginScreenPreview(){
