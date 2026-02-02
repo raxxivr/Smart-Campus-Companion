@@ -1,4 +1,4 @@
-package com.example.smartcampuscompanion.ui
+package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -25,11 +25,11 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    username: String?,
+    username: State<String?>,
     onLogoutClick: () -> Unit,
+    onCampusInfoClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-fun DashboardScreen(modifier: Modifier = Modifier) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -49,7 +49,10 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 NavigationDrawerItem(
                     label = { Text("Campus Information") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onCampusInfoClick()
+                    },
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -72,6 +75,13 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                     selected = false,
                     onClick = { /* Handle navigation */ },
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+                NavigationDrawerItem(
+                    label = { Text("Logout") },
+                    selected = false,
+                    onClick = { onLogoutClick() },
+                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }
@@ -99,48 +109,26 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                         containerColor = TealPrimary,
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White
-                    )
+                    ),
+                    windowInsets = WindowInsets.statusBars // Fixes header size issue
                 )
             }
         ) { innerPadding ->
-            DashboardContent(Modifier.padding(innerPadding))
+            DashboardContent(username.value, modifier = Modifier.padding(innerPadding))
         }
     }
 }
 
 @Composable
-fun DashboardContent(modifier: Modifier = Modifier) {
+fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            IconButton(onClick = onLogoutClick) {
-                Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Logout")
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-        
         Text(
-            text = "Welcome, ${username ?: "Student"}!",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-            text = "Smart Campus Companion",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.secondary,
-            modifier = Modifier.padding(bottom = 48.dp)
-        Text(
-            text = "Welcome to your Dashboard",
+            text = "Welcome, ${username ?: "student"}!",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp
@@ -220,7 +208,8 @@ fun DashboardContent(modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun DashboardScreenPreview() {
+    val mockUsername = remember { mutableStateOf("student") }
     SmartCampusCompanionTheme {
-        DashboardScreen(username = "John Doe", onLogoutClick = {})
+        DashboardScreen(username = mockUsername, onLogoutClick = {}, onCampusInfoClick = {})
     }
 }

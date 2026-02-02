@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -16,7 +17,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.smartcampuscompanion.data.SessionManager
+import com.example.smartcampuscompanion.ui.screens.CampusInfoScreen
 import com.example.smartcampuscompanion.ui.screens.DashboardScreen
+import com.example.smartcampuscompanion.ui.screens.LoadingScreen
 import com.example.smartcampuscompanion.ui.screens.LoginScreen
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.viewmodel.LoginViewModel
@@ -36,9 +39,11 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val isLoggedIn by viewModel.isLoggedIn
             val loginError by viewModel.loginError
+            val isLoading by viewModel.isLoading
 
-            // Re-check session on launch
-            val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "login"
+            val startDestination = remember {
+                if (sessionManager.isLoggedIn()) "dashboard" else "login"
+            }
 
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
@@ -48,6 +53,7 @@ class MainActivity : ComponentActivity() {
                 } else {
                     navController.navigate("login") {
                         popUpTo("dashboard") { inclusive = true }
+                        popUpTo("campus_info") { inclusive = true }
                     }
                 }
             }
@@ -61,23 +67,37 @@ class MainActivity : ComponentActivity() {
 
             SmartCampusCompanionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = startDestination,
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("login") {
-                            LoginScreen(
-                                onLoginClick = { username, password ->
-                                    viewModel.login(username, password)
-                                }
-                            )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = startDestination,
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("login") {
+                                LoginScreen(
+                                    onLoginClick = { username, password ->
+                                        viewModel.login(username, password)
+                                    }
+                                )
+                            }
+                            composable("dashboard") {
+                                val usernameState = remember { mutableStateOf(viewModel.username) }
+                                DashboardScreen(
+                                    username = usernameState,
+                                    onLogoutClick = { viewModel.logout() },
+                                    onCampusInfoClick = { navController.navigate("campus_info") }
+                                )
+                            }
+                            composable("campus_info") {
+                                CampusInfoScreen(
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
                         }
-                        composable("dashboard") {
-                            DashboardScreen(
-                                username = viewModel.username,
-                                onLogoutClick = { viewModel.logout() }
-                            )
+                        
+                        // Overlay Loading Screen when isLoading is true
+                        if (isLoading) {
+                            LoadingScreen()
                         }
                     }
                 }
