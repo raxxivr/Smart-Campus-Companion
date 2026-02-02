@@ -24,6 +24,11 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun DashboardScreen(
+    username: String?,
+    onLogoutClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
 fun DashboardScreen(modifier: Modifier = Modifier) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
@@ -111,6 +116,29 @@ fun DashboardContent(modifier: Modifier = Modifier) {
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End
+        ) {
+            IconButton(onClick = onLogoutClick) {
+                Icon(imageVector = Icons.Default.ExitToApp, contentDescription = "Logout")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text(
+            text = "Welcome, ${username ?: "Student"}!",
+            style = MaterialTheme.typography.headlineLarge,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+
+        Text(
+            text = "Smart Campus Companion",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.secondary,
+            modifier = Modifier.padding(bottom = 48.dp)
         Text(
             text = "Welcome to your Dashboard",
             style = MaterialTheme.typography.headlineMedium.copy(
@@ -193,6 +221,6 @@ fun DashboardContent(modifier: Modifier = Modifier) {
 @Composable
 fun DashboardScreenPreview() {
     SmartCampusCompanionTheme {
-        DashboardScreen()
+        DashboardScreen(username = "John Doe", onLogoutClick = {})
     }
 }
