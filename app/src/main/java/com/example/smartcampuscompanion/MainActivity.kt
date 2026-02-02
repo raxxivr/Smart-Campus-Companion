@@ -26,17 +26,26 @@ import com.example.smartcampuscompanion.viewmodel.LoginViewModel
 import com.example.smartcampuscompanion.viewmodel.LoginViewModelFactory
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Enables edge-to-edge layout for modern UI appearance
         enableEdgeToEdge()
+
         setContent {
+
+            // Get the current context
             val context = LocalContext.current
+
             val sessionManager = remember { SessionManager(context) }
+
             val viewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager)
             )
-            
+
             val navController = rememberNavController()
+
             val isLoggedIn by viewModel.isLoggedIn
             val loginError by viewModel.loginError
             val isLoading by viewModel.isLoading
@@ -51,7 +60,6 @@ class MainActivity : ComponentActivity() {
                         popUpTo("login") { inclusive = true }
                     }
                 } else {
-                    // When logging out, clear the entire backstack and go to login
                     navController.navigate("login") {
                         popUpTo(0) { inclusive = true }
                     }
@@ -67,34 +75,41 @@ class MainActivity : ComponentActivity() {
 
             SmartCampusCompanionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
                     Box(modifier = Modifier.fillMaxSize()) {
+
                         NavHost(
                             navController = navController,
                             startDestination = startDestination,
                             modifier = Modifier.padding(innerPadding)
                         ) {
+
                             composable("login") {
                                 LoginScreen(
                                     onLoginClick = { username, password ->
+                                        // Pass user input to ViewModel for validation
                                         viewModel.login(username, password)
                                     }
                                 )
                             }
+
                             composable("dashboard") {
                                 DashboardScreen(
                                     username = viewModel.username,
                                     onLogoutClick = { viewModel.logout() },
-                                    onCampusInfoClick = { navController.navigate("campus_info") }
+                                    onCampusInfoClick = {
+                                        navController.navigate("campus_info")
+                                    }
                                 )
                             }
+
                             composable("campus_info") {
                                 CampusInfoScreen(
                                     onBackClick = { navController.popBackStack() }
                                 )
                             }
                         }
-                        
-                        // Overlay Loading Screen when isLoading is true
+
                         if (isLoading) {
                             LoadingScreen()
                         }
