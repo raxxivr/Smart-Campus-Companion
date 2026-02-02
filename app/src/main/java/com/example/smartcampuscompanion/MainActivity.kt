@@ -12,6 +12,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.smartcampuscompanion.data.SessionManager
 import com.example.smartcampuscompanion.ui.screens.DashboardScreen
 import com.example.smartcampuscompanion.ui.screens.LoginScreen
@@ -30,8 +33,24 @@ class MainActivity : ComponentActivity() {
                 factory = LoginViewModelFactory(sessionManager)
             )
             
+            val navController = rememberNavController()
             val isLoggedIn by viewModel.isLoggedIn
             val loginError by viewModel.loginError
+
+            // Re-check session on launch
+            val startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "login"
+
+            LaunchedEffect(isLoggedIn) {
+                if (isLoggedIn) {
+                    navController.navigate("dashboard") {
+                        popUpTo("login") { inclusive = true }
+                    }
+                } else {
+                    navController.navigate("login") {
+                        popUpTo("dashboard") { inclusive = true }
+                    }
+                }
+            }
 
             LaunchedEffect(loginError) {
                 loginError?.let {
@@ -42,19 +61,24 @@ class MainActivity : ComponentActivity() {
 
             SmartCampusCompanionTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    if (isLoggedIn) {
-                        DashboardScreen(
-                            username = viewModel.username,
-                            onLogoutClick = { viewModel.logout() },
-                            modifier = Modifier.padding(innerPadding)
-                        )
-                    } else {
-                        LoginScreen(
-                            onLoginClick = { username, password ->
-                                viewModel.login(username, password)
-                            },
-                            modifier = Modifier.padding(innerPadding)
-                        )
+                    NavHost(
+                        navController = navController,
+                        startDestination = startDestination,
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+                        composable("login") {
+                            LoginScreen(
+                                onLoginClick = { username, password ->
+                                    viewModel.login(username, password)
+                                }
+                            )
+                        }
+                        composable("dashboard") {
+                            DashboardScreen(
+                                username = viewModel.username,
+                                onLogoutClick = { viewModel.logout() }
+                            )
+                        }
                     }
                 }
             }
