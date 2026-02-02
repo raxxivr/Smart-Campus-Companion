@@ -48,8 +48,10 @@ class MainActivity : ComponentActivity() {
                 factory = LoginViewModelFactory(sessionManager)
             )
 
+            // Navigation controller for screen navigation
             val navController = rememberNavController()
 
+            // Observe login-related states from ViewModel
             val isLoggedIn by viewModel.isLoggedIn
             val loginError by viewModel.loginError
             val isLoading by viewModel.isLoading
