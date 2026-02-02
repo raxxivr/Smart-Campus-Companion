@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,13 +18,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.ui.theme.TealSecondary
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    username: State<String?>,
+    username: String?,
     onLogoutClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -110,11 +108,11 @@ fun DashboardScreen(
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White
                     ),
-                    windowInsets = WindowInsets.statusBars // Fixes header size issue
+                    windowInsets = WindowInsets.statusBars
                 )
             }
         ) { innerPadding ->
-            DashboardContent(username.value, modifier = Modifier.padding(innerPadding))
+            DashboardContent(username, modifier = Modifier.padding(innerPadding))
         }
     }
 }
@@ -139,7 +137,6 @@ fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // App Logo/Icon representation from Login Screen
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -170,7 +167,6 @@ fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Example feature card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -208,8 +204,7 @@ fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
 @Preview(showBackground = true)
 @Composable
 fun DashboardScreenPreview() {
-    val mockUsername = remember { mutableStateOf("student") }
     SmartCampusCompanionTheme {
-        DashboardScreen(username = mockUsername, onLogoutClick = {}, onCampusInfoClick = {})
+        DashboardScreen(username = "student", onLogoutClick = {}, onCampusInfoClick = {})
     }
 }

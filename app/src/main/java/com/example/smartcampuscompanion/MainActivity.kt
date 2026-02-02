@@ -51,9 +51,9 @@ class MainActivity : ComponentActivity() {
                         popUpTo("login") { inclusive = true }
                     }
                 } else {
+                    // When logging out, clear the entire backstack and go to login
                     navController.navigate("login") {
-                        popUpTo("dashboard") { inclusive = true }
-                        popUpTo("campus_info") { inclusive = true }
+                        popUpTo(0) { inclusive = true }
                     }
                 }
             }
@@ -81,9 +81,8 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable("dashboard") {
-                                val usernameState = remember { mutableStateOf(viewModel.username) }
                                 DashboardScreen(
-                                    username = usernameState,
+                                    username = viewModel.username,
                                     onLogoutClick = { viewModel.logout() },
                                     onCampusInfoClick = { navController.navigate("campus_info") }
                                 )
