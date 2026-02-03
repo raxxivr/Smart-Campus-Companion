@@ -37,7 +37,7 @@ fun DashboardScreen(
             ModalDrawerSheet {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Smart Campus",
+                    "Smart Campus Companion",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     color = TealPrimary,
@@ -91,7 +91,7 @@ fun DashboardScreen(
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "Smart Campus",
+                            "Smart Campus Companion",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
