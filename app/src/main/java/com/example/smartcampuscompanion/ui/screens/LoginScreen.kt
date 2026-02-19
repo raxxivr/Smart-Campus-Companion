@@ -1,8 +1,8 @@
 package com.example.smartcampuscompanion.ui.screens
 
-
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -16,11 +16,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -30,8 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-
+import com.example.smartcampuscompanion.R
 
 @Composable
 fun LoginScreen(
@@ -39,7 +40,6 @@ fun LoginScreen(
     onForgotPasswordClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -57,10 +57,9 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-
             AppLogo()
 
-            Spacer(modifier = Modifier.height(64.dp))
+            Spacer(modifier = Modifier.height(48.dp))
 
             WelcomeSection()
 
@@ -105,38 +104,16 @@ fun LoginScreen(
     }
 }
 
-
 @Composable
-private fun AppLogo(){
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF7FFFD4),
-            Color(0xFF00CED1),
-            Color(0xFF008B8B)
-        )
+private fun AppLogo() {
+    Image(
+        painter = painterResource(id = R.drawable.logo),
+        contentDescription = "Smart Campus Logo",
+        modifier = Modifier
+            .size(120.dp)
+            .clip(RoundedCornerShape(24.dp))
     )
-
-    Surface(
-        modifier = Modifier.size(100.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradient)
-        ){
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Smart Campus Logo",
-                modifier = Modifier.size(60.dp),
-                tint = Color.White
-            )
-        }
-    }
 }
-
 
 @Composable
 private fun WelcomeSection() {
@@ -166,12 +143,6 @@ private fun UsernameField(
     onNext: () -> Unit,
     isFocused: Boolean = false
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
-        animationSpec = tween(300),
-        label = "borderColor"
-    )
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -183,9 +154,7 @@ private fun UsernameField(
                 tint = Color(0xFF00CED1)
             )
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Text,
@@ -210,16 +179,8 @@ private fun PasswordField(
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
     onPasswordVisibilityToggle: () -> Unit,
-    onDone: () -> Unit,
-    isFocused: Boolean = false,
-    onFocusChanged: (Boolean) -> Unit = {}
+    onDone: () -> Unit
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
-        animationSpec = tween(300),
-        label = "borderColor"
-    )
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -245,12 +206,7 @@ private fun PasswordField(
             VisualTransformation.None
         else
             PasswordVisualTransformation(),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
-            .onFocusChanged { focusState ->
-                onFocusChanged(focusState.isFocused)
-            },
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -264,11 +220,7 @@ private fun PasswordField(
             focusedBorderColor = Color(0xFF00CED1),
             unfocusedBorderColor = Color(0xFFB0BEC5),
             focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1),
-            focusedLeadingIconColor = Color(0xFF00CED1),
-            unfocusedLeadingIconColor = Color(0xFF78909C),
-            focusedContainerColor = Color(0xFFE0F7FA).copy(alpha = 0.3f),
-            unfocusedContainerColor = Color.White
+            cursorColor = Color(0xFF00CED1)
         )
     )
 }
@@ -304,22 +256,14 @@ private fun LoginButton(
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF008B8B),
-            contentColor = Color.White,
-            disabledContainerColor = Color(0xFF00CED1),
-            disabledContentColor = Color(0xFFE0F7FA)
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp,
-            disabledElevation = 0.dp
+            contentColor = Color.White
         )
     ) {
         Text(
             text = "Login",
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp,
-            //color = Color(0xFF000000)
+            letterSpacing = 1.sp
         )
     }
 }
@@ -342,22 +286,5 @@ private fun SignUpSection() {
                 fontWeight = FontWeight.Bold
             )
         }
-    }
-}
-
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenPreview(){
-    MaterialTheme {
-        LoginScreen()
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun LoginScreenDarkPreview() {
-    MaterialTheme{
-        LoginScreen()
     }
 }

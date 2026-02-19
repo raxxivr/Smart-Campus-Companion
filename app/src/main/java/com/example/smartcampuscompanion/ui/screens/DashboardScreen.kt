@@ -1,5 +1,6 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -18,12 +19,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 
@@ -50,19 +53,31 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        "Smart Campus Companion",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "App Logo",
+                            modifier = Modifier.size(32.dp).clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Smart Campus Companion",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = TealPrimary // Changed text color to primary teal
+                        )
+                    }
                 },
                 actions = {
                     IconButton(onClick = { /* Search functionality */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TealPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = TealPrimary),
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White, // Changed background to white
+                    titleContentColor = TealPrimary,
+                    navigationIconContentColor = TealPrimary
+                ),
                 windowInsets = WindowInsets.statusBars
             )
         },
@@ -70,7 +85,7 @@ fun DashboardScreen(
             NavigationBar(
                 containerColor = Color.White,
                 tonalElevation = 8.dp,
-                windowInsets = WindowInsets(0, 0, 0, 0) // Ensures full width utilization
+                windowInsets = WindowInsets(0, 0, 0, 0)
             ) {
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
@@ -86,7 +101,7 @@ fun DashboardScreen(
                                 text = item, 
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontSize = 9.sp,
-                                    letterSpacing = (-0.2).sp // Slightly tighter tracking to save space
+                                    letterSpacing = (-0.2).sp
                                 ),
                                 maxLines = 1,
                                 softWrap = false,
@@ -146,7 +161,7 @@ fun DashboardContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Monday, Feb 24", // Static date for now
+                        text = "Monday, Feb 24",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
