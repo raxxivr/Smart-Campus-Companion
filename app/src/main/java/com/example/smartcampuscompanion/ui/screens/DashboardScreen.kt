@@ -1,4 +1,4 @@
-package com.example.smartcampuscompanion.ui
+package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,12 +18,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.ui.theme.TealSecondary
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreen(modifier: Modifier = Modifier) {
+fun DashboardScreen(
+    username: String?,
+    onLogoutClick: () -> Unit,
+    onCampusInfoClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -34,7 +37,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
             ModalDrawerSheet {
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    "Smart Campus",
+                    "Smart Campus Companion",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge,
                     color = TealPrimary,
@@ -44,7 +47,10 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 NavigationDrawerItem(
                     label = { Text("Campus Information") },
                     selected = false,
-                    onClick = { /* Handle navigation */ },
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        onCampusInfoClick()
+                    },
                     icon = { Icon(Icons.Default.Info, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
@@ -69,6 +75,13 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                     icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
+                NavigationDrawerItem(
+                    label = { Text("Logout") },
+                    selected = false,
+                    onClick = { onLogoutClick() },
+                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
             }
         },
         modifier = modifier
@@ -78,7 +91,7 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                 CenterAlignedTopAppBar(
                     title = {
                         Text(
-                            "Smart Campus",
+                            "Smart Campus Companion",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -94,17 +107,18 @@ fun DashboardScreen(modifier: Modifier = Modifier) {
                         containerColor = TealPrimary,
                         titleContentColor = Color.White,
                         navigationIconContentColor = Color.White
-                    )
+                    ),
+                    windowInsets = WindowInsets.statusBars
                 )
             }
         ) { innerPadding ->
-            DashboardContent(Modifier.padding(innerPadding))
+            DashboardContent(username, modifier = Modifier.padding(innerPadding))
         }
     }
 }
 
 @Composable
-fun DashboardContent(modifier: Modifier = Modifier) {
+fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -112,7 +126,7 @@ fun DashboardContent(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = "Welcome to your Dashboard",
+            text = "Welcome, ${username ?: "student"}!",
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 fontSize = 28.sp
@@ -123,7 +137,6 @@ fun DashboardContent(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        // App Logo/Icon representation from Login Screen
         Box(
             modifier = Modifier
                 .size(120.dp)
@@ -154,7 +167,6 @@ fun DashboardContent(modifier: Modifier = Modifier) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Example feature card
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
@@ -193,6 +205,6 @@ fun DashboardContent(modifier: Modifier = Modifier) {
 @Composable
 fun DashboardScreenPreview() {
     SmartCampusCompanionTheme {
-        DashboardScreen()
+        DashboardScreen(username = "student", onLogoutClick = {}, onCampusInfoClick = {})
     }
 }
