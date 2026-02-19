@@ -2,6 +2,10 @@ package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -9,16 +13,19 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,176 +33,287 @@ fun DashboardScreen(
     username: String?,
     onLogoutClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
+    onAccountClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
+    var selectedItem by remember { mutableIntStateOf(0) }
+    val items = listOf("Home", "Announcements", "Tasks", "Campus", "Account")
+    val icons = listOf(
+        Icons.Default.Home,
+        Icons.Default.Notifications,
+        Icons.Default.List,
+        Icons.Default.Info,
+        Icons.Default.AccountCircle
+    )
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    "Smart Campus Companion",
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = TealPrimary,
-                    fontWeight = FontWeight.Bold
-                )
-                HorizontalDivider()
-                NavigationDrawerItem(
-                    label = { Text("Campus Information") },
-                    selected = false,
-                    onClick = {
-                        scope.launch { drawerState.close() }
-                        onCampusInfoClick()
-                    },
-                    icon = { Icon(Icons.Default.Info, contentDescription = null) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Academic Tasks") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    icon = { Icon(Icons.Default.DateRange, contentDescription = null) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Announcements") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    icon = { Icon(Icons.Default.Notifications, contentDescription = null) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Settings") },
-                    selected = false,
-                    onClick = { /* Handle navigation */ },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-                NavigationDrawerItem(
-                    label = { Text("Logout") },
-                    selected = false,
-                    onClick = { onLogoutClick() },
-                    icon = { Icon(Icons.Default.ExitToApp, contentDescription = null) },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                )
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        "Smart Campus Companion",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
+                actions = {
+                    IconButton(onClick = { /* Search functionality */ }) {
+                        Icon(Icons.Default.Search, contentDescription = "Search", tint = Color.White)
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = TealPrimary),
+                windowInsets = WindowInsets.statusBars
+            )
         },
-        modifier = modifier
-    ) {
-        Scaffold(
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            "Smart Campus Companion",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color.White,
+                tonalElevation = 8.dp
+            ) {
+                items.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        icon = { Icon(icons[index], contentDescription = item) },
+                        label = { Text(item, style = MaterialTheme.typography.labelSmall) },
+                        selected = selectedItem == index,
+                        onClick = { 
+                            selectedItem = index
+                            if (index == 3) onCampusInfoClick()
+                            if (index == 4) onAccountClick()
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = TealPrimary,
+                            selectedTextColor = TealPrimary,
+                            unselectedIconColor = Color.Gray,
+                            unselectedTextColor = Color.Gray,
+                            indicatorColor = TealPrimary.copy(alpha = 0.1f)
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = {
-                            scope.launch { drawerState.open() }
-                        }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menu")
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-                        containerColor = TealPrimary,
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White
-                    ),
-                    windowInsets = WindowInsets.statusBars
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        DashboardContent(
+            username = username,
+            onLogoutClick = onLogoutClick,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
+}
+
+@Composable
+fun DashboardContent(
+    username: String?,
+    onLogoutClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LazyColumn(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFFFBFBFF)),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(24.dp)
+    ) {
+        // Header Section
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column {
+                    Text(
+                        text = "Hello, ${username ?: "student"}!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Monday, Feb 24", // Static date for now
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
+                    )
+                }
+                IconButton(
+                    onClick = onLogoutClick,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(TealPrimary.copy(alpha = 0.1f))
+                ) {
+                    Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = TealPrimary)
+                }
+            }
+        }
+
+        // Quick Stats / Info Cards Row
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                InfoCard(
+                    title = "Classes",
+                    value = "4 Today",
+                    icon = Icons.Default.DateRange,
+                    modifier = Modifier.weight(1f)
+                )
+                InfoCard(
+                    title = "GPA",
+                    value = "3.85",
+                    icon = Icons.Default.Star,
+                    modifier = Modifier.weight(1f)
                 )
             }
-        ) { innerPadding ->
-            DashboardContent(username, modifier = Modifier.padding(innerPadding))
+        }
+
+        // Featured Events Section
+        item {
+            Column {
+                SectionHeader(title = "Featured Events")
+                Spacer(modifier = Modifier.height(12.dp))
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
+                ) {
+                    items(listOf("Intramurals 2024", "Tech Summit", "Career Fair")) { event ->
+                        EventCard(title = event)
+                    }
+                }
+            }
+        }
+
+        // Recent Announcements Section
+        item {
+            Column {
+                SectionHeader(title = "Recent Announcements")
+                Spacer(modifier = Modifier.height(12.dp))
+                AnnouncementItem(
+                    title = "Library Hours Extension",
+                    desc = "The main library will be open until midnight during finals week.",
+                    time = "2h ago"
+                )
+                AnnouncementItem(
+                    title = "New Canteen Menu",
+                    desc = "Check out the healthy options available starting tomorrow at the student center.",
+                    time = "5h ago"
+                )
+            }
         }
     }
 }
 
 @Composable
-fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+fun InfoCard(title: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Text(
-            text = "Welcome, ${username ?: "student"}!",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 28.sp
-            ),
-            color = Color.Black,
-            textAlign = TextAlign.Center
-        )
+        Column(modifier = Modifier.padding(16.dp)) {
+            Icon(icon, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(24.dp))
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
+            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        }
+    }
+}
 
-        Spacer(modifier = Modifier.height(48.dp))
+@Composable
+fun SectionHeader(title: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        TextButton(onClick = { /* View All */ }) {
+            Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
+        }
+    }
+}
 
+@Composable
+fun EventCard(title: String) {
+    Card(
+        modifier = Modifier.width(240.dp).height(140.dp),
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
         Box(
             modifier = Modifier
-                .size(120.dp)
+                .fillMaxSize()
                 .background(
                     brush = Brush.verticalGradient(
                         colors = listOf(Color(0xFF80DEEA), TealPrimary)
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier.size(64.dp),
-                tint = Color.White
-            )
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Text(
-            text = "Stay connected with your campus community.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-        ) {
-            Row(
-                modifier = Modifier.padding(20.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    Icons.Default.Info,
-                    contentDescription = null,
-                    tint = TealPrimary,
-                    modifier = Modifier.size(32.dp)
+                    )
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                Column {
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.Bottom
+            ) {
+                Text(
+                    text = title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "Feb 28 • Main Ground",
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AnnouncementItem(title: String, desc: String, time: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(TealPrimary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Default.Notifications, contentDescription = null, tint = TealPrimary)
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Text(
-                        "Latest Update",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = TealPrimary
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    Text(
-                        "Exam schedules are now out!",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 }
+                Text(
+                    text = desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.DarkGray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }
@@ -205,6 +323,6 @@ fun DashboardContent(username: String?, modifier: Modifier = Modifier) {
 @Composable
 fun DashboardScreenPreview() {
     SmartCampusCompanionTheme {
-        DashboardScreen(username = "student", onLogoutClick = {}, onCampusInfoClick = {})
+        DashboardScreen(username = "student", onLogoutClick = {}, onCampusInfoClick = {}, onAccountClick = {})
     }
 }
