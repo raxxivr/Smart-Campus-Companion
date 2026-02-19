@@ -37,13 +37,13 @@ fun DashboardScreen(
     modifier: Modifier = Modifier
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
-    val items = listOf("Home", "Announcements", "Tasks", "Campus", "Account")
+    val items = listOf("Home", "Announcements", "Tasks", "Campus", "Settings")
     val icons = listOf(
         Icons.Default.Home,
-        Icons.Default.Notifications,
-        Icons.Default.List,
-        Icons.Default.Info,
-        Icons.Default.AccountCircle
+        Icons.Default.Campaign,
+        Icons.Default.Checklist,
+        Icons.Default.School,
+        Icons.Default.Settings
     )
 
     Scaffold(
@@ -69,12 +69,30 @@ fun DashboardScreen(
         bottomBar = {
             NavigationBar(
                 containerColor = Color.White,
-                tonalElevation = 8.dp
+                tonalElevation = 8.dp,
+                windowInsets = WindowInsets(0, 0, 0, 0) // Ensures full width utilization
             ) {
                 items.forEachIndexed { index, item ->
                     NavigationBarItem(
-                        icon = { Icon(icons[index], contentDescription = item) },
-                        label = { Text(item, style = MaterialTheme.typography.labelSmall) },
+                        icon = { 
+                            Icon(
+                                icons[index], 
+                                contentDescription = item, 
+                                modifier = Modifier.size(28.dp) 
+                            ) 
+                        },
+                        label = { 
+                            Text(
+                                text = item, 
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 9.sp,
+                                    letterSpacing = (-0.2).sp // Slightly tighter tracking to save space
+                                ),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Visible
+                            ) 
+                        },
                         selected = selectedItem == index,
                         onClick = { 
                             selectedItem = index
@@ -174,7 +192,7 @@ fun DashboardContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    items(listOf("Intramurals 2024", "Tech Summit", "Career Fair")) { event ->
+                    items(listOf("Art Exhibition", "Tech Summit", "Career Fair")) { event ->
                         EventCard(title = event)
                     }
                 }

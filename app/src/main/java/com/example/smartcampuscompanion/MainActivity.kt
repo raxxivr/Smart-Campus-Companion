@@ -84,20 +84,12 @@ class MainActivity : ComponentActivity() {
                                     username = viewModel.username,
                                     onLogoutClick = { viewModel.logout() },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
-                                    onAccountClick = { navController.navigate("account") }
+                                    onAccountClick = { /* No action for now */ }
                                 )
                             }
 
                             composable("campus_info") {
                                 CampusInfoScreen(
-                                    onBackClick = { navController.popBackStack() }
-                                )
-                            }
-
-                            composable("account") {
-                                AccountScreen(
-                                    username = viewModel.username,
-                                    onLogoutClick = { viewModel.logout() },
                                     onBackClick = { navController.popBackStack() }
                                 )
                             }
