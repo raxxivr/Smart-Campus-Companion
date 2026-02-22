@@ -1,8 +1,11 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,6 +51,15 @@ fun TaskManagerScreen(
         )
     }
 
+    var selectedCategory by remember { mutableStateOf("All") }
+    val categories = listOf("All", "Major", "Exam", "Meeting", "Quiz", "Personal")
+
+    val filteredTasks = if (selectedCategory == "All") {
+        tasks
+    } else {
+        tasks.filter { it.category == selectedCategory }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -55,6 +67,11 @@ fun TaskManagerScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    IconButton(onClick = { /* Sort Action */ }) {
+                        Icon(Icons.Default.Sort, contentDescription = "Sort", tint = TealPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -66,7 +83,11 @@ fun TaskManagerScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Add Task Action */ },
+                onClick = {
+                    // Logic to add a quick task
+                    val newId = if (tasks.isEmpty()) 1 else tasks.maxOf { it.id } + 1
+                    tasks = tasks + Task(newId, "New Task #$newId", "Mar 01, 2024", false, "Academic")
+                },
                 containerColor = TealPrimary,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -84,30 +105,88 @@ fun TaskManagerScreen(
             // Task Summary Card
             TaskSummaryCard(tasks)
 
-            Text(
-                text = "Your Tasks",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
-            LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(1f)
+            // Category Filter Row
+            LazyRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(tasks) { task ->
-                    TaskItem(
-                        task = task,
-                        onToggleComplete = {
-                            tasks = tasks.map {
-                                if (it.id == task.id) it.copy(isCompleted = !it.isCompleted) else it
-                            }
-                        }
+                items(categories) { category ->
+                    CategoryChip(
+                        category = category,
+                        isSelected = selectedCategory == category,
+                        onClick = { selectedCategory = category }
                     )
                 }
             }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = if (selectedCategory == "All") "Your Tasks" else "$selectedCategory Tasks",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "${filteredTasks.size} tasks",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Gray
+                )
+            }
+
+            if (filteredTasks.isEmpty()) {
+                EmptyTasksView(selectedCategory)
+            } else {
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    items(filteredTasks, key = { it.id }) { task ->
+                        TaskItem(
+                            task = task,
+                            onToggleComplete = {
+                                tasks = tasks.map {
+                                    if (it.id == task.id) it.copy(isCompleted = !it.isCompleted) else it
+                                }
+                            },
+                            onDelete = {
+                                tasks = tasks.filter { it.id != task.id }
+                            }
+                        )
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun CategoryChip(
+    category: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) TealPrimary else Color.White,
+        border = if (isSelected) null else BorderStroke(1.dp, Color.LightGray)
+    ) {
+        Text(
+            text = category,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            style = MaterialTheme.typography.labelLarge,
+            color = if (isSelected) Color.White else Color.Gray,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+        )
     }
 }
 
@@ -125,11 +204,22 @@ fun TaskSummaryCard(tasks: List<Task>) {
         colors = CardDefaults.cardColors(containerColor = TealPrimary)
     ) {
         Column(modifier = Modifier.padding(24.dp)) {
-            Text(
-                text = "Progress",
-                color = Color.White.copy(alpha = 0.8f),
-                style = MaterialTheme.typography.labelLarge
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "Daily Progress",
+                    color = Color.White.copy(alpha = 0.8f),
+                    style = MaterialTheme.typography.labelLarge
+                )
+                Icon(
+                    Icons.Default.TrendingUp,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.8f),
+                    modifier = Modifier.size(20.dp)
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = "$completedCount of $totalCount tasks completed",
@@ -152,7 +242,7 @@ fun TaskSummaryCard(tasks: List<Task>) {
 }
 
 @Composable
-fun TaskItem(task: Task, onToggleComplete: () -> Unit) {
+fun TaskItem(task: Task, onToggleComplete: () -> Unit, onDelete: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -210,12 +300,44 @@ fun TaskItem(task: Task, onToggleComplete: () -> Unit) {
                     }
                 }
             }
-            if (!task.isCompleted) {
-                IconButton(onClick = { /* Edit Task */ }) {
-                    Icon(Icons.Default.Edit, contentDescription = "Edit", tint = Color.LightGray, modifier = Modifier.size(20.dp))
-                }
+            IconButton(onClick = onDelete) {
+                Icon(
+                    Icons.Default.DeleteOutline,
+                    contentDescription = "Delete",
+                    tint = Color.Red.copy(alpha = 0.6f),
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
+    }
+}
+
+@Composable
+fun EmptyTasksView(category: String) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.TaskAlt,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = Color.LightGray
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = "No $category tasks yet",
+            style = MaterialTheme.typography.titleMedium,
+            color = Color.Gray
+        )
+        Text(
+            text = "Tap the + button to add one!",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.LightGray
+        )
     }
 }
 
