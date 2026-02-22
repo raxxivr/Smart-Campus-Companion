@@ -37,6 +37,7 @@ fun DashboardScreen(
     onLogoutClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
     onAccountClick: () -> Unit,
+    onTasksClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var selectedItem by remember { mutableIntStateOf(0) }
@@ -64,7 +65,7 @@ fun DashboardScreen(
                             "Smart Campus Companion",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = TealPrimary // Changed text color to primary teal
+                            color = TealPrimary
                         )
                     }
                 },
@@ -74,7 +75,7 @@ fun DashboardScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White, // Changed background to white
+                    containerColor = Color.White,
                     titleContentColor = TealPrimary,
                     navigationIconContentColor = TealPrimary
                 ),
@@ -111,8 +112,11 @@ fun DashboardScreen(
                         selected = selectedItem == index,
                         onClick = { 
                             selectedItem = index
-                            if (index == 3) onCampusInfoClick()
-                            if (index == 4) onAccountClick()
+                            when (index) {
+                                2 -> onTasksClick()
+                                3 -> onCampusInfoClick()
+                                4 -> onAccountClick()
+                            }
                         },
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = TealPrimary,
@@ -356,6 +360,12 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
 @Composable
 fun DashboardScreenPreview() {
     SmartCampusCompanionTheme {
-        DashboardScreen(username = "student", onLogoutClick = {}, onCampusInfoClick = {}, onAccountClick = {})
+        DashboardScreen(
+            username = "student", 
+            onLogoutClick = {}, 
+            onCampusInfoClick = {}, 
+            onAccountClick = {},
+            onTasksClick = {}
+        )
     }
 }

@@ -84,12 +84,19 @@ class MainActivity : ComponentActivity() {
                                     username = viewModel.username,
                                     onLogoutClick = { viewModel.logout() },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
-                                    onAccountClick = { /* No action for now */ }
+                                    onAccountClick = { /* No action for now */ },
+                                    onTasksClick = { navController.navigate("task_manager") }
                                 )
                             }
 
                             composable("campus_info") {
                                 CampusInfoScreen(
+                                    onBackClick = { navController.popBackStack() }
+                                )
+                            }
+
+                            composable("task_manager") {
+                                TaskManagerScreen(
                                     onBackClick = { navController.popBackStack() }
                                 )
                             }
