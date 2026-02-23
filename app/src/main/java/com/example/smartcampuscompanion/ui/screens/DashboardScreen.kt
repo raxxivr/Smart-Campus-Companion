@@ -18,15 +18,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 
@@ -35,21 +34,12 @@ import com.example.smartcampuscompanion.ui.theme.TealPrimary
 fun DashboardScreen(
     username: String?,
     onLogoutClick: () -> Unit,
-    onCampusInfoClick: () -> Unit,
-    onAccountClick: () -> Unit,
+    onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
+    onCampusInfoClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var selectedItem by remember { mutableIntStateOf(0) }
-    val items = listOf("Home", "Announcements", "Tasks", "Campus", "Settings")
-    val icons = listOf(
-        Icons.Default.Home,
-        Icons.Default.Campaign,
-        Icons.Default.Checklist,
-        Icons.Default.School,
-        Icons.Default.Settings
-    )
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,7 +53,7 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             "Smart Campus Companion",
-                            style = MaterialTheme.typography.titleMedium,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = TealPrimary
                         )
@@ -83,51 +73,14 @@ fun DashboardScreen(
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp,
-                windowInsets = WindowInsets(0, 0, 0, 0)
-            ) {
-                items.forEachIndexed { index, item ->
-                    NavigationBarItem(
-                        icon = { 
-                            Icon(
-                                icons[index], 
-                                contentDescription = item, 
-                                modifier = Modifier.size(28.dp) 
-                            ) 
-                        },
-                        label = { 
-                            Text(
-                                text = item, 
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 9.sp,
-                                    letterSpacing = (-0.2).sp
-                                ),
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Visible
-                            ) 
-                        },
-                        selected = selectedItem == index,
-                        onClick = { 
-                            selectedItem = index
-                            when (index) {
-                                2 -> onTasksClick()
-                                3 -> onCampusInfoClick()
-                                4 -> onAccountClick()
-                            }
-                        },
-                        colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TealPrimary,
-                            selectedTextColor = TealPrimary,
-                            unselectedIconColor = Color.Gray,
-                            unselectedTextColor = Color.Gray,
-                            indicatorColor = TealPrimary.copy(alpha = 0.1f)
-                        )
-                    )
-                }
-            }
+            BottomNavBar(
+                selectedIndex = 0,
+                onHomeClick = { /* Already here */ },
+                onAnnouncementsClick = onAnnouncementsClick,
+                onTasksClick = onTasksClick,
+                onCampusClick = onCampusInfoClick,
+                onSettingsClick = onSettingsClick
+            )
         }
     ) { innerPadding ->
         DashboardContent(
@@ -363,9 +316,10 @@ fun DashboardScreenPreview() {
         DashboardScreen(
             username = "student", 
             onLogoutClick = {}, 
-            onCampusInfoClick = {}, 
-            onAccountClick = {},
-            onTasksClick = {}
+            onAnnouncementsClick = {},
+            onTasksClick = {},
+            onCampusInfoClick = {},
+            onSettingsClick = {}
         )
     }
 }
