@@ -362,7 +362,7 @@ fun TaskDialog(
     val calendar = remember { Calendar.getInstance().apply { timeInMillis = task?.dueDate ?: System.currentTimeMillis() } }
     var date by remember { mutableLongStateOf(calendar.timeInMillis) }
     
-    val categories = listOf("Major", "Exam", "Meeting", "Quiz", "Personal")
+    val categories = listOf("Activity", "Quiz", "Exam", "Meeting", "Personal")
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     

@@ -1,16 +1,17 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,6 +20,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.data.Task
@@ -35,8 +37,23 @@ fun CalendarModuleScreen(
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
-    var selectedDate by remember { mutableStateOf(Calendar.getInstance()) }
-    
+    var selectedDayTasks by remember { mutableStateOf<List<Task>?>(null) }
+    var selectedDateText by remember { mutableStateOf("") }
+
+    // Prepare a list of months to display (e.g., 6 months back, 12 months forward)
+    val monthList = remember {
+        val list = mutableListOf<Calendar>()
+        val start = Calendar.getInstance().apply { add(Calendar.MONTH, -6) }
+        repeat(24) {
+            list.add(start.clone() as Calendar)
+            start.add(Calendar.MONTH, 1)
+        }
+        list
+    }
+
+    // Scroll to current month initially
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = 6)
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -50,50 +67,107 @@ fun CalendarModuleScreen(
             )
         }
     ) { padding ->
-        Column(
+        LazyColumn(
+            state = listState,
             modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFFBFBFF))
+                .background(Color.White)
         ) {
-            MonthSelector(
-                selectedDate = selectedDate,
-                onMonthChange = { selectedDate = it }
+            items(monthList) { month ->
+                MonthSection(
+                    month = month,
+                    tasks = tasks,
+                    onDateClick = { date, dayTasks ->
+                        selectedDateText = SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(date.time)
+                        selectedDayTasks = dayTasks
+                    }
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+        }
+
+        if (selectedDayTasks != null) {
+            TaskViewDialog(
+                dateText = selectedDateText,
+                tasks = selectedDayTasks!!,
+                onDismiss = { selectedDayTasks = null }
             )
-            
-            CalendarGrid(
-                selectedDate = selectedDate,
-                tasks = tasks,
-                onDateSelected = { selectedDate = it }
-            )
-            
-            Divider(modifier = Modifier.padding(vertical = 16.dp), color = Color.LightGray.copy(alpha = 0.3f))
-            
-            Text(
-                text = "Tasks for " + SimpleDateFormat("MMMM dd", Locale.getDefault()).format(selectedDate.time),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-            
-            val filteredTasks = tasks.filter { isSameDay(it.dueDate, selectedDate.timeInMillis) }
-            
-            if (filteredTasks.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No tasks for this day", color = Color.Gray)
+        }
+    }
+}
+
+@Composable
+fun MonthSection(month: Calendar, tasks: List<Task>, onDateClick: (Calendar, List<Task>) -> Unit) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(month.time),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = TealPrimary,
+            modifier = Modifier.padding(16.dp)
+        )
+        
+        CalendarFullGrid(
+            currentMonth = month,
+            tasks = tasks,
+            onDateClick = onDateClick
+        )
+    }
+}
+
+@Composable
+fun CalendarFullGrid(currentMonth: Calendar, tasks: List<Task>, onDateClick: (Calendar, List<Task>) -> Unit) {
+    val daysInMonth = currentMonth.getActualMaximum(Calendar.DAY_OF_MONTH)
+    val firstDayOfMonth = (currentMonth.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
+    
+    val days = mutableListOf<Calendar?>()
+    repeat(firstDayOfMonth) { days.add(null) }
+    for (i in 1..daysInMonth) {
+        val day = (currentMonth.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, i) }
+        days.add(day)
+    }
+
+    val dayLabels = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
+    
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            dayLabels.forEach { label ->
+                Text(
+                    text = label,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
+        
+        val rows = days.chunked(7)
+        rows.forEach { week ->
+            Row(modifier = Modifier.height(100.dp).fillMaxWidth()) {
+                week.forEach { day ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .border(0.5.dp, Color.LightGray.copy(alpha = 0.2f))
+                            .clickable(enabled = day != null) {
+                                if (day != null) {
+                                    val dayTasks = tasks.filter { isSameDay(it.dueDate, day.timeInMillis) }
+                                    onDateClick(day, dayTasks)
+                                }
+                            }
+                    ) {
+                        if (day != null) {
+                            CalendarDayCell(day, tasks)
+                        }
+                    }
                 }
-            } else {
-                LazyColumn(
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(filteredTasks) { task ->
-                        TaskItemModern(
-                            task = task,
-                            onToggle = { taskViewModel.updateTask(task.copy(isCompleted = !task.isCompleted)) },
-                            onDelete = { taskViewModel.deleteTask(task) },
-                            onEdit = { /* Navigate to edit if needed */ }
-                        )
+                if (week.size < 7) {
+                    repeat(7 - week.size) { 
+                        Box(modifier = Modifier.weight(1f).fillMaxHeight().border(0.5.dp, Color.LightGray.copy(alpha = 0.2f))) 
                     }
                 }
             }
@@ -102,102 +176,129 @@ fun CalendarModuleScreen(
 }
 
 @Composable
-fun MonthSelector(selectedDate: Calendar, onMonthChange: (Calendar) -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+fun CalendarDayCell(day: Calendar, tasks: List<Task>) {
+    val isToday = isSameDay(day.timeInMillis, System.currentTimeMillis())
+    val dayTasks = tasks.filter { isSameDay(it.dueDate, day.timeInMillis) }
+
+    Column(
+        modifier = Modifier.fillMaxSize().padding(2.dp),
+        horizontalAlignment = Alignment.Start
     ) {
-        IconButton(onClick = {
-            val newDate = (selectedDate.clone() as Calendar).apply { add(Calendar.MONTH, -1) }
-            onMonthChange(newDate)
-        }) { Icon(Icons.Default.ChevronLeft, contentDescription = null) }
-        
         Text(
-            text = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(selectedDate.time),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold
+            text = day.get(Calendar.DAY_OF_MONTH).toString(),
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+            fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Medium,
+            color = if (isToday) Color.White else Color.Black,
+            modifier = if (isToday) Modifier
+                .background(Color.Red, CircleShape)
+                .size(24.dp)
+                .wrapContentSize(Alignment.Center)
+            else Modifier.padding(start = 4.dp, top = 2.dp)
         )
         
-        IconButton(onClick = {
-            val newDate = (selectedDate.clone() as Calendar).apply { add(Calendar.MONTH, 1) }
-            onMonthChange(newDate)
-        }) { Icon(Icons.Default.ChevronRight, contentDescription = null) }
+        Spacer(modifier = Modifier.height(2.dp))
+        
+        Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            dayTasks.take(3).forEach { task ->
+                val barColor = getCategoryColor(task.category)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(14.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(barColor.copy(alpha = if (task.isCompleted) 0.3f else 1f))
+                        .padding(horizontal = 2.dp),
+                    contentAlignment = Alignment.CenterStart
+                ) {
+                    Text(
+                        text = task.title,
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
+                        color = if (task.isCompleted) Color.Gray else Color.White,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (dayTasks.size > 3) {
+                Text(
+                    text = "+${dayTasks.size - 3} more",
+                    style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+                    color = Color.Gray,
+                    modifier = Modifier.padding(start = 2.dp)
+                )
+            }
+        }
     }
 }
 
 @Composable
-fun CalendarGrid(selectedDate: Calendar, tasks: List<Task>, onDateSelected: (Calendar) -> Unit) {
-    val daysInMonth = selectedDate.getActualMaximum(Calendar.DAY_OF_MONTH)
-    val firstDayOfMonth = (selectedDate.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, 1) }.get(Calendar.DAY_OF_WEEK) - 1
-    
-    val days = mutableListOf<Calendar?>()
-    repeat(firstDayOfMonth) { days.add(null) }
-    for (i in 1..daysInMonth) {
-        val day = (selectedDate.clone() as Calendar).apply { set(Calendar.DAY_OF_MONTH, i) }
-        days.add(day)
-    }
-
-    val dayLabels = listOf("S", "M", "T", "W", "T", "F", "S")
-    
-    Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            dayLabels.forEach { label ->
-                Text(
-                    text = label,
-                    modifier = Modifier.weight(1f),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray
-                )
-            }
-        }
-        
-        Spacer(modifier = Modifier.height(8.dp))
-        
-        val rows = days.chunked(7)
-        rows.forEach { week ->
-            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
-                week.forEach { day ->
-                    Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                        if (day != null) {
-                            val isSelected = isSameDay(day.timeInMillis, selectedDate.timeInMillis)
-                            val hasTasks = tasks.any { isSameDay(it.dueDate, day.timeInMillis) }
-                            
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(if (isSelected) TealPrimary else Color.Transparent)
-                                    .clickable { onDateSelected(day) },
-                                verticalArrangement = Arrangement.Center
+fun TaskViewDialog(dateText: String, tasks: List<Task>, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(dateText, fontWeight = FontWeight.Bold, color = TealPrimary) },
+        text = {
+            if (tasks.isEmpty()) {
+                Text("No tasks for this day.", color = Color.Gray)
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(tasks) { task ->
+                        val categoryColor = getCategoryColor(task.category)
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = categoryColor.copy(alpha = 0.1f)),
+                            border = BorderStroke(1.dp, categoryColor.copy(alpha = 0.3f))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = day.get(Calendar.DAY_OF_MONTH).toString(),
-                                    color = if (isSelected) Color.White else Color.Black,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                Box(
+                                    modifier = Modifier
+                                        .size(12.dp)
+                                        .clip(CircleShape)
+                                        .background(categoryColor)
                                 )
-                                if (hasTasks) {
-                                    Box(
-                                        modifier = Modifier
-                                            .size(4.dp)
-                                            .clip(CircleShape)
-                                            .background(if (isSelected) Color.White else TealPrimary)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column {
+                                    Text(
+                                        text = task.title,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (task.isCompleted) Color.Gray else Color.Black
+                                    )
+                                    Text(
+                                        text = task.category,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = categoryColor,
+                                        fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
                         }
                     }
                 }
-                // Fill empty slots if week is shorter than 7
-                repeat(7 - week.size) { Box(modifier = Modifier.weight(1f)) }
             }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Close", color = TealPrimary) }
         }
+    )
+}
+
+fun getCategoryColor(category: String): Color {
+    return when (category) {
+        "Exam" -> Color(0xFFFFB74D) // Orange
+        "Quiz" -> Color(0xFF9575CD) // Purple
+        "Meeting" -> Color(0xFF4FC3F7) // Light Blue
+        "Assignment" -> Color(0xFF81C784) // Green
+        else -> TealPrimary
     }
 }
 
-fun isSameDay(time1: Long, time2: Long): Boolean {
+private fun isSameDay(time1: Long, time2: Long): Boolean {
     val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
     val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
     return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&

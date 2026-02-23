@@ -133,8 +133,11 @@ fun DashboardContent(
     
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
+    val monthName = SimpleDateFormat("MMM", Locale.getDefault()).format(calendar.time)
     val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
+    val fullDate = "$dayName, $monthName $dayNumber"
 
+    // Logic for finding current or next day tasks
     val todayTasks = tasks.filter { isSameDay(it.dueDate, calendar.timeInMillis) && !it.isCompleted }
     
     val tomorrow = (calendar.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
@@ -147,6 +150,7 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // Header Section
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -176,6 +180,7 @@ fun DashboardContent(
             }
         }
 
+        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -186,6 +191,7 @@ fun DashboardContent(
             )
         }
 
+        // Featured Events Section
         item {
             Column {
                 SectionHeader(title = "Featured Events")
@@ -206,6 +212,7 @@ fun DashboardContent(
             }
         }
 
+        // Recent Announcements Section
         item {
             Column {
                 SectionHeader(title = "Recent Announcements")
@@ -448,4 +455,12 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
             }
         }
     }
+}
+
+// Helper function to check if two timestamps are on the same day
+private fun isSameDay(time1: Long, time2: Long): Boolean {
+    val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
+    val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+           cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
 }
