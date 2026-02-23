@@ -29,16 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.data.Department
-import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModel
-import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModelFactory
+import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampusInfoScreen(
     onBackClick: () -> Unit,
-    viewModel: CampusInfoViewModel = viewModel(factory = CampusInfoViewModelFactory())
+    viewModel: CampusInfoViewModel = viewModel()
 ) {
-    val departments by viewModel.departments.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -53,7 +52,7 @@ fun CampusInfoScreen(
         }
     ) { padding ->
         LazyColumn(modifier = Modifier.padding(padding)) {
-            items(departments) { department ->
+            items(uiState.departments) { department ->
                 DepartmentCard(department)
             }
         }
