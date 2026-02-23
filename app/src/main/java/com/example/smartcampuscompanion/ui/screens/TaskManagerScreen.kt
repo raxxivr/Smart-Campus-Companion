@@ -114,7 +114,7 @@ fun TaskManagerScreen(
                         colors = CardDefaults.cardColors(containerColor = TealPrimary)
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
-                            Text("Daily Progress", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
+                            Text("Progress", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
                             Text(
                                 "$completedCount of $totalCount tasks completed",
                                 color = Color.White,
