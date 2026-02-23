@@ -16,11 +16,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.smartcampuscompanion.data.SessionManager
+import com.example.smartcampuscompanion.data.*
 import com.example.smartcampuscompanion.ui.screens.*
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
-import com.example.smartcampuscompanion.viewmodel.LoginViewModel
-import com.example.smartcampuscompanion.viewmodel.LoginViewModelFactory
+import com.example.smartcampuscompanion.viewmodel.*
 
 class MainActivity : ComponentActivity() {
 
@@ -30,15 +29,22 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+            
             val sessionManager = remember { SessionManager(context) }
-            val viewModel: LoginViewModel = viewModel(
+            val taskDatabase = remember { TaskDatabase.getDatabase(context) }
+            val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
+
+            val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager)
+            )
+            val taskViewModel: TaskViewModel = viewModel(
+                factory = TaskViewModelFactory(taskRepository)
             )
 
             val navController = rememberNavController()
-            val isLoggedIn by viewModel.isLoggedIn
-            val loginError by viewModel.loginError
-            val isLoading by viewModel.isLoading
+            val isLoggedIn by loginViewModel.isLoggedIn
+            val loginError by loginViewModel.loginError
+            val isLoading by loginViewModel.isLoading
 
             val startDestination = remember {
                 if (sessionManager.isLoggedIn()) "dashboard" else "login"
@@ -59,7 +65,7 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(loginError) {
                 loginError?.let {
                     Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    viewModel.clearError()
+                    loginViewModel.clearError()
                 }
             }
 
@@ -74,23 +80,36 @@ class MainActivity : ComponentActivity() {
                             composable("login") {
                                 LoginScreen(
                                     onLoginClick = { username, password ->
-                                        viewModel.login(username, password)
+                                        loginViewModel.login(username, password)
                                     }
                                 )
                             }
 
                             composable("dashboard") {
                                 DashboardScreen(
-                                    username = viewModel.username,
-                                    onLogoutClick = { viewModel.logout() },
+                                    username = loginViewModel.username,
+                                    onLogoutClick = { loginViewModel.logout() },
+                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onTasksClick = { navController.navigate("task_manager") },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
-                                    onAccountClick = { /* No action for now */ }
+                                    onSettingsClick = { /* navController.navigate("settings") */ }
                                 )
                             }
 
                             composable("campus_info") {
                                 CampusInfoScreen(
                                     onBackClick = { navController.popBackStack() }
+                                )
+                            }
+
+                            composable("task_manager") {
+                                TaskManagerScreen(
+                                    viewModel = taskViewModel,
+                                    onBackClick = { navController.popBackStack() },
+                                    onHomeClick = { navController.navigate("dashboard") },
+                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onCampusClick = { navController.navigate("campus_info") },
+                                    onSettingsClick = { /* navController.navigate("settings") */ }
                                 )
                             }
                         }
