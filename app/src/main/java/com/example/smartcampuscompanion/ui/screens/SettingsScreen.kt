@@ -1,24 +1,12 @@
 package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +15,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.ui.viewmodel.SettingsViewModel
 
@@ -131,6 +122,41 @@ fun SettingsScreen(
             item {
                 Column {
                     Text(
+                        text = "Preferences",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column {
+                            SettingsToggleRow(
+                                icon     = Icons.Default.Notifications,
+                                title    = "Push Notifications",
+                                checked  = notifications,
+                                onToggle = { viewModel.toggleNotifications(it) }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = Color(0xFFF0F0F0)
+                            )
+                            SettingsToggleRow(
+                                icon     = Icons.Default.DarkMode,
+                                title    = "Dark Mode",
+                                checked  = darkMode,
+                                onToggle = { viewModel.toggleDarkMode(it) }
+                            )
+                        }
+                    }
+                }
+            }
+            item {
+                Column {
+                    Text(
                         text = "About",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
@@ -151,6 +177,47 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+}
+@Composable
+private fun SettingsToggleRow(
+    icon: ImageVector,
+    title: String,
+    checked: Boolean,
+    onToggle: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(TealPrimary.copy(alpha = 0.1f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = TealPrimary)
+        }
+        Text(
+            text     = title,
+            modifier = Modifier.weight(1f),
+            style    = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        Switch(
+            checked         = checked,
+            onCheckedChange = onToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color.White,
+                checkedTrackColor = TealPrimary
+            )
+        )
     }
 }
 
