@@ -88,11 +88,13 @@ class MainActivity : ComponentActivity() {
                             composable("dashboard") {
                                 DashboardScreen(
                                     username = loginViewModel.username,
+                                    taskViewModel = taskViewModel,
                                     onLogoutClick = { loginViewModel.logout() },
                                     onAnnouncementsClick = { /* navController.navigate("announcements") */ },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
-                                    onSettingsClick = { /* navController.navigate("settings") */ }
+                                    onSettingsClick = { /* navController.navigate("settings") */ },
+                                    onCalendarClick = { navController.navigate("calendar_module") }
                                 )
                             }
 
@@ -110,6 +112,13 @@ class MainActivity : ComponentActivity() {
                                     onAnnouncementsClick = { /* navController.navigate("announcements") */ },
                                     onCampusClick = { navController.navigate("campus_info") },
                                     onSettingsClick = { /* navController.navigate("settings") */ }
+                                )
+                            }
+
+                            composable("calendar_module") {
+                                CalendarModuleScreen(
+                                    taskViewModel = taskViewModel,
+                                    onBackClick = { navController.popBackStack() }
                                 )
                             }
                         }

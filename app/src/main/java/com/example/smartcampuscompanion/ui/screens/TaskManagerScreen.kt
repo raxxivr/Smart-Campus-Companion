@@ -114,7 +114,7 @@ fun TaskManagerScreen(
                         colors = CardDefaults.cardColors(containerColor = TealPrimary)
                     ) {
                         Column(modifier = Modifier.padding(24.dp)) {
-                            Text("Daily Progress", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
+                            Text("Progress", color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelMedium)
                             Text(
                                 "$completedCount of $totalCount tasks completed",
                                 color = Color.White,
@@ -362,7 +362,7 @@ fun TaskDialog(
     val calendar = remember { Calendar.getInstance().apply { timeInMillis = task?.dueDate ?: System.currentTimeMillis() } }
     var date by remember { mutableLongStateOf(calendar.timeInMillis) }
     
-    val categories = listOf("Major", "Exam", "Meeting", "Quiz", "Personal")
+    val categories = listOf("Activity", "Quiz", "Exam", "Meeting", "Personal")
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     

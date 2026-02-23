@@ -2,6 +2,7 @@ package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -18,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,21 +27,52 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
+import com.example.smartcampuscompanion.viewmodel.TaskViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
     username: String?,
+    taskViewModel: TaskViewModel,
     onLogoutClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
     onSettingsClick: () -> Unit,
+    onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        onLogoutClick()
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -57,11 +90,6 @@ fun DashboardScreen(
                             fontWeight = FontWeight.Bold,
                             color = TealPrimary
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Search functionality */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TealPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -85,7 +113,9 @@ fun DashboardScreen(
     ) { innerPadding ->
         DashboardContent(
             username = username,
-            onLogoutClick = onLogoutClick,
+            taskViewModel = taskViewModel,
+            onLogoutRequest = { showLogoutDialog = true },
+            onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -94,9 +124,25 @@ fun DashboardScreen(
 @Composable
 fun DashboardContent(
     username: String?,
-    onLogoutClick: () -> Unit,
+    taskViewModel: TaskViewModel,
+    onLogoutRequest: () -> Unit,
+    onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val tasks by taskViewModel.allTasks.collectAsState()
+    
+    val calendar = Calendar.getInstance()
+    val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
+    val monthName = SimpleDateFormat("MMM", Locale.getDefault()).format(calendar.time)
+    val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
+    val fullDate = "$dayName, $monthName $dayNumber"
+
+    // Logic for finding current or next day tasks
+    val todayTasks = tasks.filter { isSameDay(it.dueDate, calendar.timeInMillis) && !it.isCompleted }
+    
+    val tomorrow = (calendar.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
+    val tomorrowTasks = tasks.filter { isSameDay(it.dueDate, tomorrow.timeInMillis) && !it.isCompleted }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -118,13 +164,13 @@ fun DashboardContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Monday, Feb 24",
+                        text = "ID: 2300999 • BSIT - 3rd Year",
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
                 }
                 IconButton(
-                    onClick = onLogoutClick,
+                    onClick = onLogoutRequest,
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(TealPrimary.copy(alpha = 0.1f))
@@ -134,25 +180,15 @@ fun DashboardContent(
             }
         }
 
-        // Quick Stats / Info Cards Row
+        // Calendar Widget Section
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                InfoCard(
-                    title = "Classes",
-                    value = "4 Today",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f)
-                )
-                InfoCard(
-                    title = "GPA",
-                    value = "3.85",
-                    icon = Icons.Default.Star,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            CalendarWidget(
+                dayNumber = dayNumber,
+                dayName = dayName,
+                tasksToShow = if (todayTasks.isNotEmpty()) todayTasks else tomorrowTasks,
+                isTomorrow = todayTasks.isEmpty() && tomorrowTasks.isNotEmpty(),
+                onClick = onCalendarClick
+            )
         }
 
         // Featured Events Section
@@ -164,8 +200,13 @@ fun DashboardContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    items(listOf("Art Exhibition", "Tech Summit", "Career Fair")) { event ->
-                        EventCard(title = event)
+                    val events = listOf(
+                        Pair("Art Exhibition", R.drawable.art_exhibit_image),
+                        Pair("Tech Summit", R.drawable.tech_summit_image),
+                        Pair("Career Fair", R.drawable.career_fair_image)
+                    )
+                    items(events) { event ->
+                        EventCard(title = event.first, imageRes = event.second)
                     }
                 }
             }
@@ -192,18 +233,120 @@ fun DashboardContent(
 }
 
 @Composable
-fun InfoCard(title: String, value: String, icon: ImageVector, modifier: Modifier = Modifier) {
+fun CalendarWidget(
+    dayNumber: String,
+    dayName: String,
+    tasksToShow: List<Task>,
+    isTomorrow: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .height(110.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Icon(icon, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(24.dp))
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = title, style = MaterialTheme.typography.labelMedium, color = Color.Gray)
-            Text(text = value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(end = 24.dp)
+            ) {
+                Text(
+                    text = dayName.take(3).uppercase(),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = dayNumber,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.Black
+                )
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp)
+                    .background(Color.LightGray.copy(alpha = 0.5f))
+            )
+
+            Column(
+                modifier = Modifier
+                    .padding(start = 24.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (isTomorrow) {
+                    Text(
+                        "Tomorrow's Reminder:",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TealPrimary,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                
+                if (tasksToShow.isEmpty()) {
+                    Text(
+                        "No tasks today",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
+                } else {
+                    tasksToShow.take(2).forEachIndexed { index, task ->
+                        UpcomingItem(
+                            title = task.title,
+                            time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
+                            category = task.category
+                        )
+                        if (index == 0 && tasksToShow.size > 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UpcomingItem(title: String, time: String, category: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .clip(CircleShape)
+                .background(TealPrimary)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Column {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = "$time • $category",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
         }
     }
 }
@@ -223,21 +366,28 @@ fun SectionHeader(title: String) {
 }
 
 @Composable
-fun EventCard(title: String) {
+fun EventCard(title: String, imageRes: Int) {
     Card(
         modifier = Modifier.width(240.dp).height(140.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF80DEEA), TealPrimary)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                        )
                     )
-                )
-        ) {
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -292,7 +442,6 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
                     Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
@@ -301,25 +450,17 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                     text = desc,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.DarkGray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2
                 )
             }
         }
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun DashboardScreenPreview() {
-    SmartCampusCompanionTheme {
-        DashboardScreen(
-            username = "student", 
-            onLogoutClick = {}, 
-            onAnnouncementsClick = {},
-            onTasksClick = {},
-            onCampusInfoClick = {},
-            onSettingsClick = {}
-        )
-    }
+// Helper function to check if two timestamps are on the same day
+private fun isSameDay(time1: Long, time2: Long): Boolean {
+    val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
+    val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+           cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
 }
