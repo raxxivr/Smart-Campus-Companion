@@ -18,9 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +28,8 @@ import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,15 +55,10 @@ fun DashboardScreen(
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
                             "Smart Campus Companion",
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = TealPrimary
                         )
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { /* Search functionality */ }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search", tint = TealPrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -97,6 +94,9 @@ fun DashboardContent(
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Live date calculation
+    val currentDate = remember { SimpleDateFormat("EEEE, MMM dd", Locale.getDefault()).format(Date()) }
+
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -118,7 +118,7 @@ fun DashboardContent(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Monday, Feb 24",
+                        text = currentDate,
                         style = MaterialTheme.typography.bodyMedium,
                         color = Color.Gray
                     )
@@ -164,8 +164,13 @@ fun DashboardContent(
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
-                    items(listOf("Art Exhibition", "Tech Summit", "Career Fair")) { event ->
-                        EventCard(title = event)
+                    val events = listOf(
+                        Pair("Art Exhibition", R.drawable.`art_exhibit_image`),
+                        Pair("Tech Summit", R.drawable.`tech_summit_image`),
+                        Pair("Career Fair", R.drawable.`career_fair_image`)
+                    )
+                    items(events) { event ->
+                        EventCard(title = event.first, imageRes = event.second)
                     }
                 }
             }
@@ -223,21 +228,29 @@ fun SectionHeader(title: String) {
 }
 
 @Composable
-fun EventCard(title: String) {
+fun EventCard(title: String, imageRes: Int) {
     Card(
         modifier = Modifier.width(240.dp).height(140.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF80DEEA), TealPrimary)
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = imageRes),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            // Overlay gradient for text readability
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
+                        )
                     )
-                )
-        ) {
+            )
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -292,7 +305,6 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
                     Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
@@ -301,8 +313,7 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                     text = desc,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.DarkGray,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    maxLines = 2
                 )
             }
         }
