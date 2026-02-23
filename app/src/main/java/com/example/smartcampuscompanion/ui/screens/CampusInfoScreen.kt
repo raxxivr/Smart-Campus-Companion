@@ -50,7 +50,8 @@ fun CampusInfoScreen(
                     Text(
                         text = "Campus Info",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = TealPrimary
                     ) 
                 },
                 navigationIcon = {
@@ -64,7 +65,7 @@ fun CampusInfoScreen(
                 )
             )
         },
-        containerColor = Color(0xFFFBFBFF)
+        containerColor = Color.White
     ) { padding ->
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
@@ -74,7 +75,7 @@ fun CampusInfoScreen(
                 start = 16.dp,
                 end = 16.dp
             ),
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().background(Color.White),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -92,10 +93,12 @@ fun DepartmentDashboardCard(department: Department) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(240.dp), // Increased height to fit more info
+            .height(260.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
             modifier = Modifier
@@ -127,14 +130,20 @@ fun DepartmentDashboardCard(department: Department) {
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                color = TealPrimary,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 16.sp,
-                modifier = Modifier.height(32.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 0.5.dp)
+            Spacer(modifier = Modifier.height(4.dp))
+            HorizontalDivider(
+                color = TealPrimary.copy(alpha = 0.2f), 
+                thickness = 0.5.dp
+            )
             Spacer(modifier = Modifier.height(8.dp))
 
             // Phone
@@ -178,7 +187,7 @@ fun InfoRow(icon: ImageVector, text: String, modifier: Modifier = Modifier) {
         Text(
             text = text,
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
-            color = Color.DarkGray,
+            color = TealPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
