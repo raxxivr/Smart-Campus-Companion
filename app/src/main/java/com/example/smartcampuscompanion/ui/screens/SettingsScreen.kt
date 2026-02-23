@@ -19,10 +19,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.ui.viewmodel.SettingsViewModel
-
+import com.example.smartcampuscompanion.viewmodel.SettingsViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,9 +176,37 @@ fun SettingsScreen(
                     }
                 }
             }
+            item {
+                OutlinedButton(
+                    onClick  = { showLogoutDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
+                    shape  = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    ),
+                    border = androidx.compose.foundation.BorderStroke(
+                        1.dp, MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.ExitToApp,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "Log Out",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                }
+            }
         }
     }
 }
+
 @Composable
 private fun SettingsToggleRow(
     icon: ImageVector,
@@ -257,3 +285,11 @@ private fun SettingsInfoRow(
     }
 }
 
+@Preview(showBackground = true)
+@Composable
+fun SettingsScreenPreview() {
+    SmartCampusCompanionTheme {
+        SettingsScreen(username  = "student", onLogout  = {}, viewModel = viewModel()
+        )
+    }
+}

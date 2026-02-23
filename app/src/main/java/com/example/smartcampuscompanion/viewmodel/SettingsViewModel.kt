@@ -1,4 +1,4 @@
-package com.example.smartcampuscompanion.ui.viewmodel
+package com.example.smartcampuscompanion.viewmodel
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
