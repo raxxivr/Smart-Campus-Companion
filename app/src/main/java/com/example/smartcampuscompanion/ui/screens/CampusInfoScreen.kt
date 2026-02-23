@@ -1,126 +1,195 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smartcampuscompanion.data.Department
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-
-data class Department(
-    val name: String,
-    val email: String,
-    val phone: String,
-    val office: String
-)
-
-val departmentList = listOf(
-    Department("College of Computing Studies", "ccs@example.com", "123-456-7890", "Building A, Room 101"),
-    Department("College of Education", "coed@example.com", "123-456-7891", "Building B, Room 202"),
-    Department("College of Engineering", "coe@example.com", "123-456-7892", "Building C, Room 303"),
-    Department("College of Health and Allied Sciences", "chas@example.com", "123-456-7893", "Building D, Room 404"),
-    Department("College of Arts and Sciences", "cas@example.com", "123-456-7894", "Building E, Room 505"),
-    Department("College of Business, Accountancy and Administration", "cbaa@example.com", "123-456-7895", "Building F, Room 606")
-)
+import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampusInfoScreen(
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    viewModel: CampusInfoViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
+            TopAppBar(
                 title = { 
                     Text(
-                        "Campus Information", 
+                        text = "Campus Info",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = TealPrimary
                     ) 
                 },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
-                            tint = Color.White
-                        )
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TealPrimary)
                     }
                 },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = TealPrimary)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.White,
+                    titleContentColor = TealPrimary
+                )
             )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            modifier = modifier
-                .fillMaxSize()
-                .background(Color(0xFFFBFBFF))
-                .padding(paddingValues)
-                .padding(horizontal = 16.dp)
+        },
+        containerColor = Color.White
+    ) { padding ->
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding() + 16.dp,
+                bottom = 16.dp,
+                start = 16.dp,
+                end = 16.dp
+            ),
+            modifier = Modifier.fillMaxSize().background(Color.White),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { Spacer(modifier = Modifier.height(8.dp)) }
-            items(departmentList) { department ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = MaterialTheme.shapes.large
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Text(
-                            text = department.name,
-                            style = MaterialTheme.typography.titleMedium.copy(
-                                fontWeight = FontWeight.Bold,
-                                color = TealPrimary,
-                                fontSize = 18.sp
-                            )
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        InfoRow(label = "Email", value = department.email)
-                        InfoRow(label = "Phone", value = department.phone)
-                        InfoRow(label = "Office", value = department.office)
-                    }
-                }
+            items(uiState.departments) { department ->
+                DepartmentDashboardCard(department)
             }
-            item { Spacer(modifier = Modifier.height(16.dp)) }
         }
     }
 }
 
 @Composable
-fun InfoRow(label: String, value: String) {
-    Row(modifier = Modifier.padding(vertical = 2.dp)) {
-        Text(
-            text = "$label: ",
-            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color.DarkGray
-        )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            color = Color.Gray
-        )
+fun DepartmentDashboardCard(department: Department) {
+    val context = LocalContext.current
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(260.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White,
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(12.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top
+        ) {
+            // Icon
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(TealPrimary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = department.icon,
+                    contentDescription = department.name,
+                    modifier = Modifier.size(28.dp),
+                    tint = TealPrimary
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Name
+            Text(
+                text = department.name,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                color = TealPrimary,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis,
+                lineHeight = 16.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            HorizontalDivider(
+                color = TealPrimary.copy(alpha = 0.2f), 
+                thickness = 0.5.dp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Phone
+            InfoRow(icon = Icons.Default.Phone, text = department.phone)
+            
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Email
+            InfoRow(
+                icon = Icons.Default.Email, 
+                text = department.email,
+                modifier = Modifier.clickable {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:${department.email}")
+                    }
+                    context.startActivity(Intent.createChooser(intent, "Send Email"))
+                }
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+            
+            // Location/Building
+            InfoRow(icon = Icons.Default.LocationOn, text = department.location)
+        }
     }
 }
 
-@Preview(showBackground = true)
 @Composable
-fun CampusInfoScreenPreview() {
-    SmartCampusCompanionTheme {
-        CampusInfoScreen(onBackClick = {})
+fun InfoRow(icon: ImageVector, text: String, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(14.dp),
+            tint = TealPrimary
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall.copy(fontSize = 10.sp),
+            color = TealPrimary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }

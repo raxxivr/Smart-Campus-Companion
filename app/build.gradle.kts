@@ -40,6 +40,8 @@ android {
     }
 }
 
+val room_version = "2.6.1"
+
 dependencies {
     implementation(libs.androidx.compose.foundation)
     val roomVersion = "2.6.1"
@@ -52,7 +54,6 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.animation.core.lint)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.animation)
     implementation("androidx.compose.material:material-icons-extended")
