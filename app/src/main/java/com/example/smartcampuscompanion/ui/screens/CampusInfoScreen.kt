@@ -23,22 +23,28 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartcampuscompanion.data.departmentList
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
+import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CampusInfoScreen(
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: CampusInfoViewModel = viewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -71,7 +77,7 @@ fun CampusInfoScreen(
                 .padding(horizontal = 16.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
-            items(departmentList) { department ->
+            items(uiState.departments) { department ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
