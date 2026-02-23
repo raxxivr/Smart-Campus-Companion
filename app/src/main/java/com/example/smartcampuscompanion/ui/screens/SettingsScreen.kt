@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.SettingsViewModel
@@ -31,6 +32,10 @@ fun SettingsScreen(
     username: String?,
     onLogout: () -> Unit,
     viewModel: SettingsViewModel,
+    onHomeClick: () -> Unit,
+    onAnnouncementsClick: () -> Unit,
+    onTasksClick: () -> Unit,
+    onCampusClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val notifications by viewModel.notificationsEnabled
@@ -75,6 +80,16 @@ fun SettingsScreen(
                 ),
                 windowInsets = WindowInsets.statusBars
             )
+        },
+        bottomBar = {
+            BottomNavBar(
+                selectedIndex = 4,
+                onHomeClick = onHomeClick,
+                onAnnouncementsClick = onAnnouncementsClick,
+                onTasksClick = onTasksClick,
+                onCampusClick = onCampusClick,
+                onSettingsClick = { /* Already here */ }
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -107,12 +122,12 @@ fun SettingsScreen(
                         modifier = Modifier
                             .size(52.dp)
                             .clip(CircleShape)
-                            .background(TealPrimary),
+                            .background(TealPrimary.copy(alpha = 0.1f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = username?.first()?.uppercaseChar()?.toString() ?: "S",
-                            color = Color.White,
+                            color = TealPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp
                         )
@@ -289,7 +304,14 @@ private fun SettingsInfoRow(
 @Composable
 fun SettingsScreenPreview() {
     SmartCampusCompanionTheme {
-        SettingsScreen(username  = "student", onLogout  = {}, viewModel = viewModel()
+        SettingsScreen(
+            username  = "student",
+            onLogout  = {},
+            viewModel = viewModel(),
+            onHomeClick = {},
+            onAnnouncementsClick = {},
+            onTasksClick = {},
+            onCampusClick = {}
         )
     }
 }

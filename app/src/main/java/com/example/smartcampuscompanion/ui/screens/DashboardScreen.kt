@@ -40,7 +40,6 @@ import java.util.*
 fun DashboardScreen(
     username: String?,
     taskViewModel: TaskViewModel,
-    onLogoutClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
@@ -48,31 +47,6 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showLogoutDialog by remember { mutableStateOf(false) }
-
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to sign out?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        onLogoutClick()
-                    }
-                ) {
-                    Text("Logout", color = Color.Red)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -114,7 +88,6 @@ fun DashboardScreen(
         DashboardContent(
             username = username,
             taskViewModel = taskViewModel,
-            onLogoutRequest = { showLogoutDialog = true },
             onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
         )
@@ -125,7 +98,6 @@ fun DashboardScreen(
 fun DashboardContent(
     username: String?,
     taskViewModel: TaskViewModel,
-    onLogoutRequest: () -> Unit,
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -169,14 +141,7 @@ fun DashboardContent(
                         color = Color.Gray
                     )
                 }
-                IconButton(
-                    onClick = onLogoutRequest,
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(TealPrimary.copy(alpha = 0.1f))
-                ) {
-                    Icon(Icons.Default.ExitToApp, contentDescription = "Logout", tint = TealPrimary)
-                }
+                // Logout button removed from here
             }
         }
 
@@ -457,7 +422,6 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
     }
 }
 
-// Helper function to check if two timestamps are on the same day
 private fun isSameDay(time1: Long, time2: Long): Boolean {
     val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
     val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
