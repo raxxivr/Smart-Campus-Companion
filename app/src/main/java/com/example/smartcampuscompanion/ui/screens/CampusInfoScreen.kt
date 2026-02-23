@@ -1,5 +1,7 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -51,30 +54,53 @@ fun CampusInfoScreen(
             )
         }
     ) { padding ->
-        LazyColumn(modifier = Modifier.padding(padding)) {
-            items(uiState.departments) { department ->
-                DepartmentCard(department)
+        Column(modifier = Modifier.padding(padding)) {
+            OutlinedTextField(
+                value = uiState.searchQuery,
+                onValueChange = viewModel::onSearchQueryChange,
+                label = { Text("Search Departments") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+            LazyColumn {
+                items(uiState.departments, key = { it.name }) { department ->
+                    DepartmentCard(
+                        department = department,
+                        isExpanded = uiState.expandedDepartmentIds.contains(department.name),
+                        onCardClick = { viewModel.onDepartmentClicked(department.name) }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-fun DepartmentCard(department: Department) {
+fun DepartmentCard(
+    department: Department,
+    isExpanded: Boolean,
+    onCardClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable(onClick = onCardClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(text = department.name, style = MaterialTheme.typography.titleLarge)
-            Spacer(modifier = Modifier.height(8.dp))
-            InfoRow("Head", department.head)
-            InfoRow("Email", department.email)
-            InfoRow("Phone", department.phone)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = department.description, style = MaterialTheme.typography.bodyMedium)
+            AnimatedVisibility(visible = isExpanded) {
+                Column {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    InfoRow("Head", department.head)
+                    InfoRow("Email", department.email)
+                    InfoRow("Phone", department.phone)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = department.description, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
         }
     }
 }
