@@ -47,6 +47,31 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        // Logout logic would be handled via a callback if needed
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -88,6 +113,7 @@ fun DashboardScreen(
         DashboardContent(
             username = username,
             taskViewModel = taskViewModel,
+            onAnnouncementsClick = onAnnouncementsClick,
             onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
         )
@@ -98,20 +124,19 @@ fun DashboardScreen(
 fun DashboardContent(
     username: String?,
     taskViewModel: TaskViewModel,
+    onAnnouncementsClick: () -> Unit,
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
     
+    // Calculating current date on every composition ensures it's always "live" 
+    // when the screen is accessed or refreshed.
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
-    val monthName = SimpleDateFormat("MMM", Locale.getDefault()).format(calendar.time)
     val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
-    val fullDate = "$dayName, $monthName $dayNumber"
 
-    // Logic for finding current or next day tasks
     val todayTasks = tasks.filter { isSameDay(it.dueDate, calendar.timeInMillis) && !it.isCompleted }
-    
     val tomorrow = (calendar.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
     val tomorrowTasks = tasks.filter { isSameDay(it.dueDate, tomorrow.timeInMillis) && !it.isCompleted }
 
@@ -122,7 +147,6 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Header Section
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -141,11 +165,9 @@ fun DashboardContent(
                         color = Color.Gray
                     )
                 }
-                // Logout button removed from here
             }
         }
 
-        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -156,7 +178,6 @@ fun DashboardContent(
             )
         }
 
-        // Featured Events Section
         item {
             Column {
                 SectionHeader(title = "Featured Events")
@@ -177,10 +198,12 @@ fun DashboardContent(
             }
         }
 
-        // Recent Announcements Section
         item {
             Column {
-                SectionHeader(title = "Recent Announcements")
+                SectionHeader(
+                    title = "Recent Announcements",
+                    onViewAllClick = onAnnouncementsClick
+                )
                 Spacer(modifier = Modifier.height(12.dp))
                 AnnouncementItem(
                     title = "Library Hours Extension",
@@ -317,14 +340,14 @@ fun UpcomingItem(title: String, time: String, category: String) {
 }
 
 @Composable
-fun SectionHeader(title: String) {
+fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        TextButton(onClick = { /* View All */ }) {
+        TextButton(onClick = onViewAllClick) {
             Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
         }
     }
