@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
                                 DashboardScreen(
                                     username = loginViewModel.username,
                                     taskViewModel = taskViewModel,
-                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
                                     onSettingsClick = { navController.navigate("settings") },
@@ -98,11 +98,21 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
 
+                            composable("announcements") {
+                                AnnouncementScreen(
+                                    onBackClick = { navController.popBackStack() },
+                                    onHomeClick = { navController.navigate("dashboard") },
+                                    onTasksClick = { navController.navigate("task_manager") },
+                                    onCampusClick = { navController.navigate("campus_info") },
+                                    onSettingsClick = { navController.navigate("settings") }
+                                )
+                            }
+
                             composable("campus_info") {
                                 CampusInfoScreen(
                                     onBackClick = { navController.popBackStack() },
                                     onHomeClick = { navController.navigate("dashboard") },
-                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onSettingsClick = { navController.navigate("settings") }
                                 )
@@ -113,7 +123,7 @@ class MainActivity : ComponentActivity() {
                                     viewModel = taskViewModel,
                                     onBackClick = { navController.popBackStack() },
                                     onHomeClick = { navController.navigate("dashboard") },
-                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onAnnouncementsClick = { navController.navigate("announcements") },
                                     onCampusClick = { navController.navigate("campus_info") },
                                     onSettingsClick = { navController.navigate("settings") }
                                 )
@@ -132,7 +142,7 @@ class MainActivity : ComponentActivity() {
                                     onLogout = { loginViewModel.logout() },
                                     viewModel = settingsViewModel,
                                     onHomeClick = { navController.navigate("dashboard") },
-                                    onAnnouncementsClick = { /* navController.navigate("announcements") */ },
+                                    onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onCampusClick = { navController.navigate("campus_info") }
                                 )

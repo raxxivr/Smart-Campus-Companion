@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 
 data class Announcement(
@@ -30,7 +31,13 @@ val announcementList = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnnouncementScreen(onBackClick: () -> Unit) {
+fun AnnouncementScreen(
+    onBackClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onTasksClick: () -> Unit,
+    onCampusClick: () -> Unit,
+    onSettingsClick: () -> Unit
+) {
 
     Scaffold(
         topBar = {
@@ -46,6 +53,16 @@ fun AnnouncementScreen(onBackClick: () -> Unit) {
                     titleContentColor = Color.White,
                     navigationIconContentColor = Color.White
                 )
+            )
+        },
+        bottomBar = {
+            BottomNavBar(
+                selectedIndex = 1,
+                onHomeClick = onHomeClick,
+                onAnnouncementsClick = { /* Already here */ },
+                onTasksClick = onTasksClick,
+                onCampusClick = onCampusClick,
+                onSettingsClick = onSettingsClick
             )
         }
     ) { padding ->
