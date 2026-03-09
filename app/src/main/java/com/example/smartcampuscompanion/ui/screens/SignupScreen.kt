@@ -37,7 +37,8 @@ import com.example.smartcampuscompanion.viewmodel.SignupViewModel
 fun SignupScreen(
     onSignupClick: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> },
     onBackToLoginClick: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SignupViewModel = viewModel()
 ) {
 
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -289,11 +290,65 @@ fun SignupScreen(
                     cursorColor = Color(0xFF00CED1)
                 )
             )
+
+            // Error Message
+            if (uiState.errorMessage != null) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = uiState.errorMessage!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Sign Up Button
+            Button(
+                onClick = {
+                    viewModel.onSignupClick(onSignupClick)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF008B8B),
+                    contentColor = Color.White
+                )
+            ) {
+                Text(
+                    text = "Sign Up",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.ExtraBold,
+                    letterSpacing = 1.sp
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Back to Login
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Already have an account?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF008B8B).copy(alpha = 0.7f)
+                )
+                TextButton(onClick = onBackToLoginClick) {
+                    Text(
+                        text = "Login",
+                        color = Color(0xFF00CED1),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     }
 }
-
-
 
 @Composable
 private fun SignupHeader() {
