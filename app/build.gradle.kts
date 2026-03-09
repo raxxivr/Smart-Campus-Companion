@@ -41,8 +41,6 @@ android {
     }
 }
 
-val room_version = "2.6.1"
-
 dependencies {
     implementation(libs.androidx.compose.foundation)
     val roomVersion = "2.6.1"
