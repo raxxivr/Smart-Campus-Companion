@@ -66,11 +66,27 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            UsernameField(
-                value = username,
-                onValueChange = { username = it },
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            EmailField(
+                value = email,
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                isError = emailError != null
             )
+
+
+            if (emailError != null) {
+                Text(
+                    text = emailError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -81,8 +97,14 @@ fun LoginScreen(
                 onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
                 onDone = {
                     focusManager.clearFocus()
-                    if (username.isNotBlank() && password.isNotBlank()) {
-                        onLoginClick(username, password)
+
+                    if (email.isBlank()) {
+                        emailError = "Email is required"
+                    } else if (!email.contains("@")) {
+                        emailError = "Please enter a valid email"
+                    } else if (password.isNotBlank()) {
+                        emailError = null
+                        onLoginClick(email, password)
                     }
                 }
             )
@@ -94,13 +116,23 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             LoginButton(
-                onClick = { onLoginClick(username, password) },
-                enabled = username.isNotBlank() && password.isNotBlank()
+                onClick = {
+
+                    if (email.isBlank()) {
+                        emailError = "Email is required"
+                    } else if (!email.contains("@")) {
+                        emailError = "Please enter a valid email"
+                    } else if (password.isNotBlank()) {
+                        emailError = null
+                        onLoginClick(email, password)
+                    }
+                },
+                enabled = email.isNotBlank() && password.isNotBlank()
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SignUpSection()
+            SignUpSection(onSignUpClick = onSignUpClick)  // UPDATED: Added callback
         }
     }
 }
