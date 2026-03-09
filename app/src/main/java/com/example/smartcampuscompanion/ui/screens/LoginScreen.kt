@@ -1,10 +1,7 @@
 package com.example.smartcampuscompanion.ui.screens
 
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -18,7 +15,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -31,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartcampuscompanion.R
 
 
 
@@ -295,28 +292,20 @@ private fun LoginButton(
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(
             containerColor = Color(0xFF008B8B),
-            contentColor = Color.White,
-            disabledContainerColor = Color(0xFF00CED1),
-            disabledContentColor = Color(0xFFE0F7FA)
-        ),
-        elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 4.dp,
-            pressedElevation = 8.dp,
-            disabledElevation = 0.dp
+            contentColor = Color.White
         )
     ) {
         Text(
             text = "Login",
             fontSize = 18.sp,
             fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp,
-            //color = Color(0xFF000000)
+            letterSpacing = 1.sp
         )
     }
 }
 
 @Composable
-private fun SignUpSection() {
+private fun SignUpSection(onSignUpClick: () -> Unit = {}) {
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
@@ -326,7 +315,7 @@ private fun SignUpSection() {
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF008B8B).copy(alpha = 0.7f)
         )
-        TextButton(onClick = { }) {
+        TextButton(onClick = onSignUpClick) {  // UPDATED: Added callback
             Text(
                 text = "Sign Up",
                 color = Color(0xFF00CED1),
@@ -336,19 +325,11 @@ private fun SignUpSection() {
     }
 }
 
-
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
-fun LoginScreenPreview(){
+fun LoginScreenPreview() {
     MaterialTheme {
         LoginScreen()
     }
 }
 
-@Preview(showBackground = true, showSystemUi = true, uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES)
-@Composable
-fun LoginScreenDarkPreview() {
-    MaterialTheme{
-        LoginScreen()
-    }
-}
