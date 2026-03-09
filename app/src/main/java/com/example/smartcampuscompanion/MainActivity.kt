@@ -110,7 +110,11 @@ class MainActivity : ComponentActivity() {
 
                             composable("campus_info") {
                                 CampusInfoScreen(
-                                    onBackClick = { navController.popBackStack() }
+                                    onBackClick = { navController.popBackStack() },
+                                    onHomeClick = { navController.navigate("dashboard") },
+                                    onAnnouncementsClick = { navController.navigate("announcements") },
+                                    onTasksClick = { navController.navigate("task_manager") },
+                                    onSettingsClick = { navController.navigate("settings") }
                                 )
                             }
 

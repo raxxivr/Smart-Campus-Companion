@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.data.Department
+import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
 
@@ -41,6 +42,10 @@ import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
 @Composable
 fun CampusInfoScreen(
     onBackClick: () -> Unit,
+    onHomeClick: () -> Unit,
+    onAnnouncementsClick: () -> Unit,
+    onTasksClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     viewModel: CampusInfoViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -77,13 +82,23 @@ fun CampusInfoScreen(
                     )
                 )
             },
+            bottomBar = {
+                BottomNavBar(
+                    selectedIndex = 3,
+                    onHomeClick = onHomeClick,
+                    onAnnouncementsClick = onAnnouncementsClick,
+                    onTasksClick = onTasksClick,
+                    onCampusClick = { /* Already here */ },
+                    onSettingsClick = onSettingsClick
+                )
+            },
             containerColor = Color.White
         ) { padding ->
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 contentPadding = PaddingValues(
                     top = padding.calculateTopPadding() + 16.dp,
-                    bottom = 16.dp,
+                    bottom = padding.calculateBottomPadding() + 16.dp,
                     start = 16.dp,
                     end = 16.dp
                 ),
