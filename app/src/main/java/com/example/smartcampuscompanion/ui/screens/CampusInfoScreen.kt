@@ -2,6 +2,7 @@ package com.example.smartcampuscompanion.ui.screens
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,7 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -107,19 +110,19 @@ fun DepartmentDashboardCard(department: Department) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            // Icon
+            // Logo Image
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(80.dp)
                     .clip(CircleShape)
-                    .background(TealPrimary.copy(alpha = 0.1f)),
+                    .background(Color.White),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = department.icon,
+                Image(
+                    painter = painterResource(id = department.iconRes),
                     contentDescription = department.name,
-                    modifier = Modifier.size(28.dp),
-                    tint = TealPrimary
+                    modifier = Modifier.size(70.dp),
+                    contentScale = ContentScale.Fit
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
