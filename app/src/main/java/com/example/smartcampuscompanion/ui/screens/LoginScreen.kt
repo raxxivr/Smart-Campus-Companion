@@ -3,24 +3,25 @@ package com.example.smartcampuscompanion.ui.screens
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -132,43 +133,22 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SignUpSection(onSignUpClick = onSignUpClick)  // UPDATED: Added callback
+            SignUpSection(onSignUpClick = onSignUpClick)
         }
     }
 }
 
 
 @Composable
-private fun AppLogo(){
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFF7FFFD4),
-            Color(0xFF00CED1),
-            Color(0xFF008B8B)
-        )
+private fun AppLogo() {
+    Image(
+        painter = painterResource(id = R.drawable.logo),
+        contentDescription = "Smart Campus Logo",
+        modifier = Modifier
+            .size(120.dp)
+            .clip(RoundedCornerShape(24.dp))
     )
-
-    Surface(
-        modifier = Modifier.size(100.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = Color.Transparent
-    ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(gradient)
-        ){
-            Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Smart Campus Logo",
-                modifier = Modifier.size(60.dp),
-                tint = Color.White
-            )
-        }
-    }
 }
-
 
 @Composable
 private fun WelcomeSection() {
@@ -192,35 +172,29 @@ private fun WelcomeSection() {
 }
 
 @Composable
-private fun UsernameField(
+private fun EmailField(
     value: String,
     onValueChange: (String) -> Unit,
     onNext: () -> Unit,
-    isFocused: Boolean = false
+    isError: Boolean = false
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
-        animationSpec = tween(300),
-        label = "borderColor"
-    )
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text("Username") },
+        label = { Text("Email Address") },
+        placeholder = { Text("example@university.edu") },
         leadingIcon = {
             Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Username Icon",
+                imageVector = Icons.Default.Email,
+                contentDescription = "Email Icon",
                 tint = Color(0xFF00CED1)
             )
         },
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
+        isError = isError,
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Text,
+            keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next
         ),
         keyboardActions = KeyboardActions(
@@ -231,11 +205,12 @@ private fun UsernameField(
             focusedBorderColor = Color(0xFF00CED1),
             unfocusedBorderColor = Color(0xFFB0BEC5),
             focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1)
+            cursorColor = Color(0xFF00CED1),
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorLabelColor = MaterialTheme.colorScheme.error
         )
     )
 }
-
 @Composable
 private fun PasswordField(
     value: String,
