@@ -217,16 +217,8 @@ private fun PasswordField(
     onValueChange: (String) -> Unit,
     passwordVisible: Boolean,
     onPasswordVisibilityToggle: () -> Unit,
-    onDone: () -> Unit,
-    isFocused: Boolean = false,
-    onFocusChanged: (Boolean) -> Unit = {}
+    onDone: () -> Unit
 ) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isFocused) Color(0xFF00CED1) else Color.Transparent,
-        animationSpec = tween(300),
-        label = "borderColor"
-    )
-
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -252,12 +244,7 @@ private fun PasswordField(
             VisualTransformation.None
         else
             PasswordVisualTransformation(),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(2.dp, borderColor, RoundedCornerShape(12.dp))
-            .onFocusChanged { focusState ->
-                onFocusChanged(focusState.isFocused)
-            },
+        modifier = Modifier.fillMaxWidth(),
         singleLine = true,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
@@ -271,11 +258,7 @@ private fun PasswordField(
             focusedBorderColor = Color(0xFF00CED1),
             unfocusedBorderColor = Color(0xFFB0BEC5),
             focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1),
-            focusedLeadingIconColor = Color(0xFF00CED1),
-            unfocusedLeadingIconColor = Color(0xFF78909C),
-            focusedContainerColor = Color(0xFFE0F7FA).copy(alpha = 0.3f),
-            unfocusedContainerColor = Color.White
+            cursorColor = Color(0xFF00CED1)
         )
     )
 }
@@ -296,6 +279,7 @@ private fun ForgotPasswordButton(onClick: () -> Unit) {
         }
     }
 }
+
 
 @Composable
 private fun LoginButton(
