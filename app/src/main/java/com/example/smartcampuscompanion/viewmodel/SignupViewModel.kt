@@ -56,4 +56,42 @@ class SignupViewModel : ViewModel() {
     fun onToggleConfirmPasswordVisibility() {
         _uiState.update { it.copy(confirmPasswordVisible = !it.confirmPasswordVisible) }
     }
+
+    fun onSignupClick(
+        onSuccess: (String, String, String, String, String) -> Unit
+    ) {
+        val state = _uiState.value
+
+        val error = when {
+            state.fullName.isBlank() -> "Please enter your full name"
+            state.email.isBlank() -> "Please enter your email"
+            !state.email.contains("@") -> "Please enter a valid email"
+            state.studentNumber.isBlank() -> "Please enter your student number"
+            state.course.isBlank() -> "Please enter your course"
+            state.password.isBlank() -> "Please enter a password"
+            state.password.length < 6 -> "Password must be at least 6 characters"
+            state.confirmPassword.isBlank() -> "Please confirm your password"
+            state.password != state.confirmPassword -> "Passwords do not match"
+            else -> null
+        }
+
+        if (error != null) {
+            _uiState.update { it.copy(errorMessage = error) }
+            return
+        }
+
+        onSuccess(
+            state.fullName,
+            state.email,
+            state.studentNumber,
+            state.course,
+            state.password
+        )
+
+        _uiState.update { it.copy(isSignupSuccessful = true) }
+    }
+
+    fun resetSignupSuccess() {
+        _uiState.update { it.copy(isSignupSuccessful = false) }
+    }
 }
