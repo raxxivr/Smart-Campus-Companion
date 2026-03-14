@@ -9,13 +9,28 @@ class SessionManager(context: Context) {
     companion object {
         private const val PREF_NAME = "smart_campus_prefs"
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
-        private const val KEY_USERNAME = "username"
+        private const val KEY_EMAIL = "email"
+        private const val KEY_FULL_NAME = "full_name"
+        private const val KEY_STUDENT_NUMBER = "student_number"
+        private const val KEY_COURSE = "course"
+        private const val KEY_PASSWORD = "password" // For mock auth
     }
 
-    fun createLoginSession(username: String) {
+    fun registerUser(fullName: String, email: String, studentNumber: String, course: String, password: String) {
+        prefs.edit().apply {
+            putString(KEY_FULL_NAME, fullName)
+            putString(KEY_EMAIL, email)
+            putString(KEY_STUDENT_NUMBER, studentNumber)
+            putString(KEY_COURSE, course)
+            putString(KEY_PASSWORD, password)
+            apply()
+        }
+    }
+
+    fun createLoginSession(email: String) {
         prefs.edit().apply {
             putBoolean(KEY_IS_LOGGED_IN, true)
-            putString(KEY_USERNAME, username)
+            putString(KEY_EMAIL, email)
             apply()
         }
     }
@@ -24,11 +39,14 @@ class SessionManager(context: Context) {
         return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
     }
 
-    fun getUsername(): String? {
-        return prefs.getString(KEY_USERNAME, null)
-    }
+    fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
+    fun getFullName(): String? = prefs.getString(KEY_FULL_NAME, null)
+    fun getStudentNumber(): String? = prefs.getString(KEY_STUDENT_NUMBER, null)
+    fun getCourse(): String? = prefs.getString(KEY_COURSE, null)
+    fun getStoredPassword(): String? = prefs.getString(KEY_PASSWORD, null)
 
     fun logout() {
-        prefs.edit().clear().apply()
+        // Keep the registration data but clear login state
+        prefs.edit().putBoolean(KEY_IS_LOGGED_IN, false).apply()
     }
 }

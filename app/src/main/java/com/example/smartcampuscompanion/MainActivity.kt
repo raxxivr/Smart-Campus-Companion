@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
                 factory = TaskViewModelFactory(taskRepository)
             )
             val settingsViewModel: SettingsViewModel = viewModel()
+            val signupViewModel: SignupViewModel = viewModel()
 
             val navController = rememberNavController()
             val isLoggedIn by loginViewModel.isLoggedIn
@@ -80,15 +81,34 @@ class MainActivity : ComponentActivity() {
                         ) {
                             composable("login") {
                                 LoginScreen(
-                                    onLoginClick = { username, password ->
-                                        loginViewModel.login(username, password)
+                                    onLoginClick = { email, password ->
+                                        loginViewModel.login(email, password)
+                                    },
+                                    onSignUpClick = {
+                                        navController.navigate("signup")
                                     }
+                                )
+                            }
+
+                            composable("signup") {
+                                SignupScreen(
+                                    onSignupClick = { fullName, email, studentNumber, course, password ->
+                                        sessionManager.registerUser(fullName, email, studentNumber, course, password)
+                                        Toast.makeText(context, "Signup Successful! Please Login.", Toast.LENGTH_SHORT).show()
+                                        navController.popBackStack()
+                                    },
+                                    onBackToLoginClick = {
+                                        navController.popBackStack()
+                                    },
+                                    viewModel = signupViewModel
                                 )
                             }
 
                             composable("dashboard") {
                                 DashboardScreen(
-                                    username = loginViewModel.username,
+                                    fullName = loginViewModel.fullName,
+                                    studentNumber = loginViewModel.studentNumber,
+                                    course = loginViewModel.course,
                                     taskViewModel = taskViewModel,
                                     onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
@@ -138,7 +158,7 @@ class MainActivity : ComponentActivity() {
 
                             composable("settings") {
                                 SettingsScreen(
-                                    username = loginViewModel.username,
+                                    username = loginViewModel.fullName ?: loginViewModel.userEmail ?: "student",
                                     onLogout = { loginViewModel.logout() },
                                     viewModel = settingsViewModel,
                                     onHomeClick = { navController.navigate("dashboard") },

@@ -38,7 +38,9 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    username: String?,
+    fullName: String?,
+    studentNumber: String?,
+    course: String?,
     taskViewModel: TaskViewModel,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
@@ -47,31 +49,6 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showLogoutDialog by remember { mutableStateOf(false) }
-
-    if (showLogoutDialog) {
-        AlertDialog(
-            onDismissRequest = { showLogoutDialog = false },
-            title = { Text("Logout") },
-            text = { Text("Are you sure you want to sign out?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showLogoutDialog = false
-                        // Logout logic would be handled via a callback if needed
-                    }
-                ) {
-                    Text("Logout", color = Color.Red)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showLogoutDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -111,7 +88,9 @@ fun DashboardScreen(
         }
     ) { innerPadding ->
         DashboardContent(
-            username = username,
+            fullName = fullName,
+            studentNumber = studentNumber,
+            course = course,
             taskViewModel = taskViewModel,
             onAnnouncementsClick = onAnnouncementsClick,
             onCalendarClick = onCalendarClick,
@@ -122,7 +101,9 @@ fun DashboardScreen(
 
 @Composable
 fun DashboardContent(
-    username: String?,
+    fullName: String?,
+    studentNumber: String?,
+    course: String?,
     taskViewModel: TaskViewModel,
     onAnnouncementsClick: () -> Unit,
     onCalendarClick: () -> Unit,
@@ -130,8 +111,6 @@ fun DashboardContent(
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
     
-    // Calculating current date on every composition ensures it's always "live" 
-    // when the screen is accessed or refreshed.
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
     val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
@@ -147,27 +126,23 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // Header Section
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Hello, ${username ?: "student"}!",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "ID: 2300999 • BSIT - 3rd Year",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                }
+            Column {
+                Text(
+                    text = "Hello, ${fullName ?: "student"}!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "ID: ${studentNumber ?: "2024-XXXX"} • ${course ?: "Regular Student"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
             }
         }
 
+        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -178,6 +153,7 @@ fun DashboardContent(
             )
         }
 
+        // Featured Events Section
         item {
             Column {
                 SectionHeader(title = "Featured Events")
@@ -198,6 +174,7 @@ fun DashboardContent(
             }
         }
 
+        // Recent Announcements Section
         item {
             Column {
                 SectionHeader(

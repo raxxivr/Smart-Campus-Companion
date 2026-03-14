@@ -19,23 +19,37 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
-    val username: String?
-        get() = sessionManager.getUsername()
+    val userEmail: String?
+        get() = sessionManager.getEmail()
 
-    fun login(username: String, password: String) {
-        val trimmedUsername = username.trim()
+    val fullName: String?
+        get() = sessionManager.getFullName()
+
+    val studentNumber: String?
+        get() = sessionManager.getStudentNumber()
+
+    val course: String?
+        get() = sessionManager.getCourse()
+
+    fun login(email: String, password: String) {
+        val trimmedEmail = email.trim()
         val trimmedPassword = password.trim()
 
         viewModelScope.launch {
             _isLoading.value = true
-            delay(1500) // Simulate network delay for UX
+            delay(1500)
             
-            if (trimmedUsername == "student" && trimmedPassword == "1234") {
-                sessionManager.createLoginSession(trimmedUsername)
+            val storedEmail = sessionManager.getEmail()
+            val storedPassword = sessionManager.getStoredPassword()
+
+            if (storedEmail != null && trimmedEmail == storedEmail && trimmedPassword == storedPassword) {
+                sessionManager.createLoginSession(trimmedEmail)
                 _isLoggedIn.value = true
                 _loginError.value = null
+            } else if (storedEmail == null) {
+                _loginError.value = "No account found. Please sign up first."
             } else {
-                _loginError.value = "Invalid Credentials"
+                _loginError.value = "Invalid Email or Password"
             }
             _isLoading.value = false
         }
@@ -44,7 +58,7 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
     fun logout() {
         viewModelScope.launch {
             _isLoading.value = true
-            delay(1000) // Simulate delay
+            delay(1000)
             sessionManager.logout()
             _isLoggedIn.value = false
             _isLoading.value = false
