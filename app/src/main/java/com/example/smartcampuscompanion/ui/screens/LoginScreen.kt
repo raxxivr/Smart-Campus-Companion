@@ -1,5 +1,7 @@
 package com.example.smartcampuscompanion.ui.screens
 
+
+import androidx.compose.foundation.Image
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -10,16 +12,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -34,15 +34,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
 
+
+
 @Composable
 fun LoginScreen(
     onLoginClick: (String, String) -> Unit = { _, _ -> },
     onForgotPasswordClick: () -> Unit = {},
+    onSignUpClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var emailError by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
 
@@ -65,11 +69,27 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            UsernameField(
-                value = username,
-                onValueChange = { username = it },
-                onNext = { focusManager.moveFocus(FocusDirection.Down) }
+            EmailField(
+                value = email,
+                onValueChange = {
+                    email = it
+                    emailError = null
+                },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) },
+                isError = emailError != null
             )
+
+
+            if (emailError != null) {
+                Text(
+                    text = emailError!!,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 4.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -80,8 +100,14 @@ fun LoginScreen(
                 onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
                 onDone = {
                     focusManager.clearFocus()
-                    if (username.isNotBlank() && password.isNotBlank()) {
-                        onLoginClick(username, password)
+
+                    if (email.isBlank()) {
+                        emailError = "Email is required"
+                    } else if (!email.contains("@")) {
+                        emailError = "Please enter a valid email"
+                    } else if (password.isNotBlank()) {
+                        emailError = null
+                        onLoginClick(email, password)
                     }
                 }
             )
@@ -93,13 +119,23 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             LoginButton(
-                onClick = { onLoginClick(username, password) },
-                enabled = username.isNotBlank() && password.isNotBlank()
+                onClick = {
+
+                    if (email.isBlank()) {
+                        emailError = "Email is required"
+                    } else if (!email.contains("@")) {
+                        emailError = "Please enter a valid email"
+                    } else if (password.isNotBlank()) {
+                        emailError = null
+                        onLoginClick(email, password)
+                    }
+                },
+                enabled = email.isNotBlank() && password.isNotBlank()
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            SignUpSection()
+            SignUpSection(onSignUpClick = onSignUpClick)
         }
     }
 }
@@ -137,27 +173,29 @@ private fun WelcomeSection() {
 }
 
 @Composable
-private fun UsernameField(
+private fun EmailField(
     value: String,
     onValueChange: (String) -> Unit,
     onNext: () -> Unit,
-    isFocused: Boolean = false
+    isError: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text("Username") },
+        label = { Text("Email Address") },
+        placeholder = { Text("example@university.edu") },
         leadingIcon = {
             Icon(
-                imageVector = Icons.Default.Person,
-                contentDescription = "Username Icon",
+                imageVector = Icons.Default.Email,
+                contentDescription = "Email Icon",
                 tint = Color(0xFF00CED1)
             )
         },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
+        isError = isError,
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Text,
+            keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next
         ),
         keyboardActions = KeyboardActions(
@@ -168,11 +206,12 @@ private fun UsernameField(
             focusedBorderColor = Color(0xFF00CED1),
             unfocusedBorderColor = Color(0xFFB0BEC5),
             focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1)
+            cursorColor = Color(0xFF00CED1),
+            errorBorderColor = MaterialTheme.colorScheme.error,
+            errorLabelColor = MaterialTheme.colorScheme.error
         )
     )
 }
-
 @Composable
 private fun PasswordField(
     value: String,
@@ -242,6 +281,7 @@ private fun ForgotPasswordButton(onClick: () -> Unit) {
     }
 }
 
+
 @Composable
 private fun LoginButton(
     onClick: () -> Unit,
@@ -269,7 +309,7 @@ private fun LoginButton(
 }
 
 @Composable
-private fun SignUpSection() {
+private fun SignUpSection(onSignUpClick: () -> Unit = {}) {
     Row(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
@@ -279,7 +319,7 @@ private fun SignUpSection() {
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF008B8B).copy(alpha = 0.7f)
         )
-        TextButton(onClick = { }) {
+        TextButton(onClick = onSignUpClick) {  // UPDATED: Added callback
             Text(
                 text = "Sign Up",
                 color = Color(0xFF00CED1),
@@ -288,3 +328,12 @@ private fun SignUpSection() {
         }
     }
 }
+
+@Preview(showBackground = true, showSystemUi = true)
+@Composable
+fun LoginScreenPreview() {
+    MaterialTheme {
+        LoginScreen()
+    }
+}
+
