@@ -33,15 +33,18 @@ class MainActivity : ComponentActivity() {
             val sessionManager = remember { SessionManager(context) }
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
+            val userRepository = remember { UserRepository(taskDatabase.userDao()) }
 
             val loginViewModel: LoginViewModel = viewModel(
-                factory = LoginViewModelFactory(sessionManager)
+                factory = LoginViewModelFactory(sessionManager, userRepository)
             )
             val taskViewModel: TaskViewModel = viewModel(
                 factory = TaskViewModelFactory(taskRepository)
             )
             val settingsViewModel: SettingsViewModel = viewModel()
-            val signupViewModel: SignupViewModel = viewModel()
+            val signupViewModel: SignupViewModel = viewModel(
+                factory = SignupViewModelFactory(userRepository)
+            )
 
             val navController = rememberNavController()
             val isLoggedIn by loginViewModel.isLoggedIn
@@ -52,8 +55,15 @@ class MainActivity : ComponentActivity() {
                 if (sessionManager.isLoggedIn()) "dashboard" else "login"
             }
 
+            LaunchedEffect(Unit) {
+                sessionManager.getEmail()?.let { email ->
+                    taskViewModel.loadTasksForUser(email)
+                }
+            }
+
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
+                    loginViewModel.userEmail?.let { taskViewModel.loadTasksForUser(it) }
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -85,6 +95,7 @@ class MainActivity : ComponentActivity() {
                                         loginViewModel.login(email, password)
                                     },
                                     onSignUpClick = {
+                                        signupViewModel.clearForm() // Clear form before entering signup
                                         navController.navigate("signup")
                                     }
                                 )
@@ -92,16 +103,24 @@ class MainActivity : ComponentActivity() {
 
                             composable("signup") {
                                 SignupScreen(
-                                    onSignupClick = { fullName, email, studentNumber, course, password ->
-                                        sessionManager.registerUser(fullName, email, studentNumber, course, password)
-                                        Toast.makeText(context, "Signup Successful! Please Login.", Toast.LENGTH_SHORT).show()
-                                        navController.popBackStack()
+                                    onSignupClick = { _, _, _, _, _ ->
+                                        // The ViewModel handles the actual registration
+                                        signupViewModel.signup()
                                     },
                                     onBackToLoginClick = {
                                         navController.popBackStack()
                                     },
                                     viewModel = signupViewModel
                                 )
+                                
+                                val uiState by signupViewModel.uiState.collectAsState()
+                                if (uiState.isSignupSuccessful) {
+                                    LaunchedEffect(Unit) {
+                                        Toast.makeText(context, "Signup Successful! Please Login.", Toast.LENGTH_SHORT).show()
+                                        signupViewModel.resetSignupSuccess()
+                                        navController.popBackStack()
+                                    }
+                                }
                             }
 
                             composable("dashboard") {

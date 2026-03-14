@@ -4,24 +4,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.data.TaskRepository
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
 
-    val allTasks: StateFlow<List<Task>> = repository.allTasks
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
+    private val _allTasks = MutableStateFlow<List<Task>>(emptyList())
+    val allTasks: StateFlow<List<Task>> = _allTasks.asStateFlow()
+
+    private var currentUserEmail: String = ""
+
+    fun loadTasksForUser(email: String) {
+        currentUserEmail = email
+        viewModelScope.launch {
+            repository.getTasksForUser(email).collectLatest { tasks ->
+                _allTasks.value = tasks
+            }
+        }
+    }
 
     fun addTask(title: String, description: String, dueDate: Long, category: String) {
         viewModelScope.launch {
             repository.insert(
                 Task(
+                    userEmail = currentUserEmail,
                     title = title,
                     description = description,
                     dueDate = dueDate,

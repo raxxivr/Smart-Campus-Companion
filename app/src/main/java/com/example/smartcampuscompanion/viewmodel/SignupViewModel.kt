@@ -1,10 +1,14 @@
 package com.example.smartcampuscompanion.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.smartcampuscompanion.data.User
+import com.example.smartcampuscompanion.data.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 data class SignupUiState(
     val fullName: String = "",
@@ -20,7 +24,7 @@ data class SignupUiState(
     val isSignupSuccessful: Boolean = false
 )
 
-class SignupViewModel : ViewModel() {
+class SignupViewModel(private val userRepository: UserRepository) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SignupUiState())
     val uiState: StateFlow<SignupUiState> = _uiState.asStateFlow()
@@ -57,9 +61,7 @@ class SignupViewModel : ViewModel() {
         _uiState.update { it.copy(confirmPasswordVisible = !it.confirmPasswordVisible) }
     }
 
-    fun onSignupClick(
-        onSuccess: (String, String, String, String, String) -> Unit
-    ) {
+    fun signup() {
         val state = _uiState.value
 
         val error = when {
@@ -80,15 +82,30 @@ class SignupViewModel : ViewModel() {
             return
         }
 
-        onSuccess(
-            state.fullName,
-            state.email,
-            state.studentNumber,
-            state.course,
-            state.password
-        )
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) }
+            
+            // Check if user already exists
+            val existingUser = userRepository.getUserByEmail(state.email)
+            if (existingUser != null) {
+                _uiState.update { it.copy(errorMessage = "Email already registered", isLoading = false) }
+                return@launch
+            }
 
-        _uiState.update { it.copy(isSignupSuccessful = true) }
+            val newUser = User(
+                fullName = state.fullName,
+                email = state.email,
+                studentNumber = state.studentNumber,
+                course = state.course,
+                password = state.password
+            )
+            userRepository.registerUser(newUser)
+            _uiState.update { it.copy(isLoading = false, isSignupSuccessful = true) }
+        }
+    }
+
+    fun clearForm() {
+        _uiState.value = SignupUiState()
     }
 
     fun resetSignupSuccess() {

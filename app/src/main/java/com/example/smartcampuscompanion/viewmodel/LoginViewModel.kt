@@ -5,10 +5,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.SessionManager
+import com.example.smartcampuscompanion.data.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
+class LoginViewModel(
+    private val sessionManager: SessionManager,
+    private val userRepository: UserRepository
+) : ViewModel() {
 
     private val _isLoggedIn = mutableStateOf(sessionManager.isLoggedIn())
     val isLoggedIn: State<Boolean> = _isLoggedIn
@@ -19,17 +23,17 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
     private val _isLoading = mutableStateOf(false)
     val isLoading: State<Boolean> = _isLoading
 
-    val userEmail: String?
-        get() = sessionManager.getEmail()
+    private val _currentUserFullName = mutableStateOf(sessionManager.getFullName())
+    val fullName: String? get() = _currentUserFullName.value
 
-    val fullName: String?
-        get() = sessionManager.getFullName()
+    private val _currentUserEmail = mutableStateOf(sessionManager.getEmail())
+    val userEmail: String? get() = _currentUserEmail.value
 
-    val studentNumber: String?
-        get() = sessionManager.getStudentNumber()
+    private val _currentStudentNumber = mutableStateOf(sessionManager.getStudentNumber())
+    val studentNumber: String? get() = _currentStudentNumber.value
 
-    val course: String?
-        get() = sessionManager.getCourse()
+    private val _currentCourse = mutableStateOf(sessionManager.getCourse())
+    val course: String? get() = _currentCourse.value
 
     fun login(email: String, password: String) {
         val trimmedEmail = email.trim()
@@ -39,17 +43,26 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
             _isLoading.value = true
             delay(1500)
             
-            val storedEmail = sessionManager.getEmail()
-            val storedPassword = sessionManager.getStoredPassword()
+            val user = userRepository.getUserByEmail(trimmedEmail)
 
-            if (storedEmail != null && trimmedEmail == storedEmail && trimmedPassword == storedPassword) {
-                sessionManager.createLoginSession(trimmedEmail)
+            if (user != null && user.password == trimmedPassword) {
+                sessionManager.createLoginSession(
+                    fullName = user.fullName,
+                    email = user.email,
+                    studentNumber = user.studentNumber,
+                    course = user.course
+                )
+                _currentUserFullName.value = user.fullName
+                _currentUserEmail.value = user.email
+                _currentStudentNumber.value = user.studentNumber
+                _currentCourse.value = user.course
+                
                 _isLoggedIn.value = true
                 _loginError.value = null
-            } else if (storedEmail == null) {
-                _loginError.value = "No account found. Please sign up first."
+            } else if (user == null) {
+                _loginError.value = "No account found with this email."
             } else {
-                _loginError.value = "Invalid Email or Password"
+                _loginError.value = "Invalid Password"
             }
             _isLoading.value = false
         }
@@ -60,6 +73,8 @@ class LoginViewModel(private val sessionManager: SessionManager) : ViewModel() {
             _isLoading.value = true
             delay(1000)
             sessionManager.logout()
+            _currentUserFullName.value = null
+            _currentUserEmail.value = null
             _isLoggedIn.value = false
             _isLoading.value = false
         }

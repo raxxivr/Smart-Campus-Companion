@@ -13,24 +13,15 @@ class SessionManager(context: Context) {
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_STUDENT_NUMBER = "student_number"
         private const val KEY_COURSE = "course"
-        private const val KEY_PASSWORD = "password" // For mock auth
     }
 
-    fun registerUser(fullName: String, email: String, studentNumber: String, course: String, password: String) {
+    fun createLoginSession(fullName: String, email: String, studentNumber: String, course: String) {
         prefs.edit().apply {
+            putBoolean(KEY_IS_LOGGED_IN, true)
             putString(KEY_FULL_NAME, fullName)
             putString(KEY_EMAIL, email)
             putString(KEY_STUDENT_NUMBER, studentNumber)
             putString(KEY_COURSE, course)
-            putString(KEY_PASSWORD, password)
-            apply()
-        }
-    }
-
-    fun createLoginSession(email: String) {
-        prefs.edit().apply {
-            putBoolean(KEY_IS_LOGGED_IN, true)
-            putString(KEY_EMAIL, email)
             apply()
         }
     }
@@ -43,10 +34,8 @@ class SessionManager(context: Context) {
     fun getFullName(): String? = prefs.getString(KEY_FULL_NAME, null)
     fun getStudentNumber(): String? = prefs.getString(KEY_STUDENT_NUMBER, null)
     fun getCourse(): String? = prefs.getString(KEY_COURSE, null)
-    fun getStoredPassword(): String? = prefs.getString(KEY_PASSWORD, null)
 
     fun logout() {
-        // Keep the registration data but clear login state
-        prefs.edit().putBoolean(KEY_IS_LOGGED_IN, false).apply()
+        prefs.edit().clear().apply()
     }
 }

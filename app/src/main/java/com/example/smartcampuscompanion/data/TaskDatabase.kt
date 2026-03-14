@@ -7,19 +7,32 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Task::class], version = 2, exportSchema = false)
+@Database(entities = [Task::class, User::class], version = 4, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
+    abstract fun userDao(): UserDao
 
     companion object {
         @Volatile
         private var INSTANCE: TaskDatabase? = null
 
-        // Migration from 1 to 2: adds the 'category' column
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE tasks ADD COLUMN category TEXT NOT NULL DEFAULT 'General'")
+            }
+        }
+
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE tasks ADD COLUMN userEmail TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
+        // Migration from 3 to 4: adds the 'users' table
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `users` (`email` TEXT NOT NULL, `fullName` TEXT NOT NULL, `studentNumber` TEXT NOT NULL, `course` TEXT NOT NULL, `password` TEXT NOT NULL, PRIMARY KEY(`email`))")
             }
         }
 
@@ -30,7 +43,7 @@ abstract class TaskDatabase : RoomDatabase() {
                     TaskDatabase::class.java,
                     "task_database"
                 )
-                .addMigrations(MIGRATION_1_2) // Add the migration strategy here
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .build()
                 INSTANCE = instance
                 instance

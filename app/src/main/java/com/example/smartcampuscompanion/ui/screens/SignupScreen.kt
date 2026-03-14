@@ -9,6 +9,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -215,11 +217,10 @@ fun SignupScreen(
                 },
                 trailingIcon = {
                     IconButton(onClick = viewModel::onTogglePasswordVisibility) {
-                        Text(
-                            text = if (uiState.passwordVisible) "HIDE" else "SHOW",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF00CED1),
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = if (uiState.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (uiState.passwordVisible) "Hide Password" else "Show Password",
+                            tint = Color(0xFF00CED1)
                         )
                     }
                 },
@@ -261,11 +262,10 @@ fun SignupScreen(
                 },
                 trailingIcon = {
                     IconButton(onClick = viewModel::onToggleConfirmPasswordVisibility) {
-                        Text(
-                            text = if (uiState.confirmPasswordVisible) "HIDE" else "SHOW",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color(0xFF00CED1),
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = if (uiState.confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (uiState.confirmPasswordVisible) "Hide Password" else "Show Password",
+                            tint = Color(0xFF00CED1)
                         )
                     }
                 },
@@ -307,7 +307,7 @@ fun SignupScreen(
             // Sign Up Button
             Button(
                 onClick = {
-                    viewModel.onSignupClick(onSignupClick)
+                    viewModel.signup()
                 },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -1,12 +1,6 @@
 package com.example.smartcampuscompanion.ui.screens
 
-
 import androidx.compose.foundation.Image
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -14,6 +8,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -33,8 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
-
-
 
 @Composable
 fun LoginScreen(
@@ -79,7 +73,6 @@ fun LoginScreen(
                 isError = emailError != null
             )
 
-
             if (emailError != null) {
                 Text(
                     text = emailError!!,
@@ -100,7 +93,6 @@ fun LoginScreen(
                 onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
                 onDone = {
                     focusManager.clearFocus()
-
                     if (email.isBlank()) {
                         emailError = "Email is required"
                     } else if (!email.contains("@")) {
@@ -120,7 +112,6 @@ fun LoginScreen(
 
             LoginButton(
                 onClick = {
-
                     if (email.isBlank()) {
                         emailError = "Email is required"
                     } else if (!email.contains("@")) {
@@ -212,6 +203,7 @@ private fun EmailField(
         )
     )
 }
+
 @Composable
 private fun PasswordField(
     value: String,
@@ -233,11 +225,10 @@ private fun PasswordField(
         },
         trailingIcon = {
             IconButton(onClick = onPasswordVisibilityToggle) {
-                Text(
-                    text = if (passwordVisible) "HIDE" else "SHOW",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color(0xFF00CED1),
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    contentDescription = if (passwordVisible) "Hide Password" else "Show Password",
+                    tint = Color(0xFF00CED1)
                 )
             }
         },
@@ -281,7 +272,6 @@ private fun ForgotPasswordButton(onClick: () -> Unit) {
     }
 }
 
-
 @Composable
 private fun LoginButton(
     onClick: () -> Unit,
@@ -319,7 +309,7 @@ private fun SignUpSection(onSignUpClick: () -> Unit = {}) {
             style = MaterialTheme.typography.bodyMedium,
             color = Color(0xFF008B8B).copy(alpha = 0.7f)
         )
-        TextButton(onClick = onSignUpClick) {  // UPDATED: Added callback
+        TextButton(onClick = onSignUpClick) {
             Text(
                 text = "Sign Up",
                 color = Color(0xFF00CED1),
@@ -328,12 +318,3 @@ private fun SignUpSection(onSignUpClick: () -> Unit = {}) {
         }
     }
 }
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun LoginScreenPreview() {
-    MaterialTheme {
-        LoginScreen()
-    }
-}
-
