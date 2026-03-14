@@ -34,12 +34,16 @@ class MainActivity : ComponentActivity() {
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
             val userRepository = remember { UserRepository(taskDatabase.userDao()) }
+            val announcementRepository = remember { AnnouncementRepository(taskDatabase.announcementDao()) }
 
             val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager, userRepository)
             )
             val taskViewModel: TaskViewModel = viewModel(
                 factory = TaskViewModelFactory(taskRepository)
+            )
+            val announcementViewModel: AnnouncementViewModel = viewModel(
+                factory = AnnouncementViewModelFactory(announcementRepository)
             )
             val settingsViewModel: SettingsViewModel = viewModel()
             val signupViewModel: SignupViewModel = viewModel(
@@ -92,10 +96,15 @@ class MainActivity : ComponentActivity() {
                             composable("login") {
                                 LoginScreen(
                                     onLoginClick = { email, password ->
-                                        loginViewModel.login(email, password)
+                                        if (email == "admin@smartcampus.com" && password == "admin123") {
+                                            sessionManager.createLoginSession("Admin", email, "ADMIN", "Administrator")
+                                            loginViewModel.login(email, password)
+                                        } else {
+                                            loginViewModel.login(email, password)
+                                        }
                                     },
                                     onSignUpClick = {
-                                        signupViewModel.clearForm() // Clear form before entering signup
+                                        signupViewModel.clearForm()
                                         navController.navigate("signup")
                                     }
                                 )
@@ -104,7 +113,6 @@ class MainActivity : ComponentActivity() {
                             composable("signup") {
                                 SignupScreen(
                                     onSignupClick = { _, _, _, _, _ ->
-                                        // The ViewModel handles the actual registration
                                         signupViewModel.signup()
                                     },
                                     onBackToLoginClick = {
@@ -138,7 +146,10 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable("announcements") {
+                                val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com"
                                 AnnouncementScreen(
+                                    isAdmin = isAdmin,
+                                    viewModel = announcementViewModel,
                                     onBackClick = { navController.popBackStack() },
                                     onHomeClick = { navController.navigate("dashboard") },
                                     onTasksClick = { navController.navigate("task_manager") },
