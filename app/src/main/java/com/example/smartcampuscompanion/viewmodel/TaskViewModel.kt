@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.data.TaskRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,10 +17,14 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
     val allTasks: StateFlow<List<Task>> = _allTasks.asStateFlow()
 
     private var currentUserEmail: String = ""
+    private var tasksJob: Job? = null
 
     fun loadTasksForUser(email: String) {
+        if (currentUserEmail == email && tasksJob?.isActive == true) return
+        
         currentUserEmail = email
-        viewModelScope.launch {
+        tasksJob?.cancel()
+        tasksJob = viewModelScope.launch {
             repository.getTasksForUser(email).collectLatest { tasks ->
                 _allTasks.value = tasks
             }

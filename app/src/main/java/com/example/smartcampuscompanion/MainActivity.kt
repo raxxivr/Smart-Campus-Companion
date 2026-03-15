@@ -34,12 +34,21 @@ class MainActivity : ComponentActivity() {
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
             val userRepository = remember { UserRepository(taskDatabase.userDao()) }
+            val announcementRepository = remember { 
+                AnnouncementRepository(
+                    taskDatabase.announcementDao(),
+                    taskDatabase.readAnnouncementDao()
+                ) 
+            }
 
             val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager, userRepository)
             )
             val taskViewModel: TaskViewModel = viewModel(
                 factory = TaskViewModelFactory(taskRepository)
+            )
+            val announcementViewModel: AnnouncementViewModel = viewModel(
+                factory = AnnouncementViewModelFactory(announcementRepository)
             )
             val settingsViewModel: SettingsViewModel = viewModel()
             val signupViewModel: SignupViewModel = viewModel(
@@ -55,15 +64,20 @@ class MainActivity : ComponentActivity() {
                 if (sessionManager.isLoggedIn()) "dashboard" else "login"
             }
 
+            // Initialize data for the logged-in user on app launch
             LaunchedEffect(Unit) {
                 sessionManager.getEmail()?.let { email ->
                     taskViewModel.loadTasksForUser(email)
+                    announcementViewModel.loadReadStatus(email)
                 }
             }
 
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
-                    loginViewModel.userEmail?.let { taskViewModel.loadTasksForUser(it) }
+                    loginViewModel.userEmail?.let { email ->
+                        taskViewModel.loadTasksForUser(email)
+                        announcementViewModel.loadReadStatus(email)
+                    }
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -92,10 +106,11 @@ class MainActivity : ComponentActivity() {
                             composable("login") {
                                 LoginScreen(
                                     onLoginClick = { email, password ->
+                                        // loginViewModel handles both Admin hardcoded check and DB check
                                         loginViewModel.login(email, password)
                                     },
                                     onSignUpClick = {
-                                        signupViewModel.clearForm() // Clear form before entering signup
+                                        signupViewModel.clearForm()
                                         navController.navigate("signup")
                                     }
                                 )
@@ -104,7 +119,6 @@ class MainActivity : ComponentActivity() {
                             composable("signup") {
                                 SignupScreen(
                                     onSignupClick = { _, _, _, _, _ ->
-                                        // The ViewModel handles the actual registration
                                         signupViewModel.signup()
                                     },
                                     onBackToLoginClick = {
@@ -129,6 +143,7 @@ class MainActivity : ComponentActivity() {
                                     studentNumber = loginViewModel.studentNumber,
                                     course = loginViewModel.course,
                                     taskViewModel = taskViewModel,
+                                    announcementViewModel = announcementViewModel,
                                     onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onCampusInfoClick = { navController.navigate("campus_info") },
@@ -138,7 +153,10 @@ class MainActivity : ComponentActivity() {
                             }
 
                             composable("announcements") {
+                                val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com"
                                 AnnouncementScreen(
+                                    isAdmin = isAdmin,
+                                    viewModel = announcementViewModel,
                                     onBackClick = { navController.popBackStack() },
                                     onHomeClick = { navController.navigate("dashboard") },
                                     onTasksClick = { navController.navigate("task_manager") },

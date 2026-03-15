@@ -43,26 +43,43 @@ class LoginViewModel(
             _isLoading.value = true
             delay(1500)
             
-            val user = userRepository.getUserByEmail(trimmedEmail)
-
-            if (user != null && user.password == trimmedPassword) {
+            // Hardcoded Admin check
+            if (trimmedEmail == "admin@smartcampus.com" && trimmedPassword == "admin123") {
                 sessionManager.createLoginSession(
-                    fullName = user.fullName,
-                    email = user.email,
-                    studentNumber = user.studentNumber,
-                    course = user.course
+                    fullName = "Admin",
+                    email = trimmedEmail,
+                    studentNumber = "ADMIN",
+                    course = "Administrator"
                 )
-                _currentUserFullName.value = user.fullName
-                _currentUserEmail.value = user.email
-                _currentStudentNumber.value = user.studentNumber
-                _currentCourse.value = user.course
+                _currentUserFullName.value = "Admin"
+                _currentUserEmail.value = trimmedEmail
+                _currentStudentNumber.value = "ADMIN"
+                _currentCourse.value = "Administrator"
                 
                 _isLoggedIn.value = true
                 _loginError.value = null
-            } else if (user == null) {
-                _loginError.value = "No account found with this email."
             } else {
-                _loginError.value = "Invalid Password"
+                val user = userRepository.getUserByEmail(trimmedEmail)
+
+                if (user != null && user.password == trimmedPassword) {
+                    sessionManager.createLoginSession(
+                        fullName = user.fullName,
+                        email = user.email,
+                        studentNumber = user.studentNumber,
+                        course = user.course
+                    )
+                    _currentUserFullName.value = user.fullName
+                    _currentUserEmail.value = user.email
+                    _currentStudentNumber.value = user.studentNumber
+                    _currentCourse.value = user.course
+                    
+                    _isLoggedIn.value = true
+                    _loginError.value = null
+                } else if (user == null) {
+                    _loginError.value = "No account found with this email."
+                } else {
+                    _loginError.value = "Invalid Password"
+                }
             }
             _isLoading.value = false
         }
@@ -75,6 +92,8 @@ class LoginViewModel(
             sessionManager.logout()
             _currentUserFullName.value = null
             _currentUserEmail.value = null
+            _currentStudentNumber.value = null
+            _currentCourse.value = null
             _isLoggedIn.value = false
             _isLoading.value = false
         }

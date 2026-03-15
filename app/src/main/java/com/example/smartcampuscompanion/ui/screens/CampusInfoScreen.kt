@@ -62,7 +62,7 @@ fun CampusInfoScreen(
     } else {
         Scaffold(
             topBar = {
-                TopAppBar(
+                CenterAlignedTopAppBar(
                     title = {
                         Text(
                             text = "Campus Info",
