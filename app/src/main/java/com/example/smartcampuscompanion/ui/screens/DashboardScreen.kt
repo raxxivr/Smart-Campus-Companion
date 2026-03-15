@@ -133,6 +133,7 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
+        // Header Section
         item {
             Column {
                 Text(
@@ -148,6 +149,7 @@ fun DashboardContent(
             }
         }
 
+        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -158,6 +160,7 @@ fun DashboardContent(
             )
         }
 
+        // Featured Events Section
         item {
             Column {
                 SectionHeader(title = "Featured Events")
@@ -178,6 +181,7 @@ fun DashboardContent(
             }
         }
 
+        // Recent Announcements Section
         item {
             Column {
                 SectionHeader(
@@ -186,12 +190,14 @@ fun DashboardContent(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                if (announcements.isEmpty()) {
-                    Text("No announcements available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                // Filter out announcements that have been read by the current student
+                val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
+
+                if (unreadAnnouncements.isEmpty()) {
+                    Text("No new announcements.", color = Color.Gray, modifier = Modifier.padding(16.dp))
                 } else {
-                    announcements.take(3).forEach { announcement ->
-                        val isRead = readAnnouncementIds.contains(announcement.id)
-                        AnnouncementItem(announcement = announcement, isRead = isRead)
+                    unreadAnnouncements.take(3).forEach { announcement ->
+                        AnnouncementItem(announcement = announcement, isRead = false)
                     }
                 }
             }
