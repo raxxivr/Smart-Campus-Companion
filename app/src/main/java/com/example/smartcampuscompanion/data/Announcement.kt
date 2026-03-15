@@ -9,5 +9,5 @@ data class Announcement(
     val id: Int = 0,
     val title: String,
     val description: String,
-    val date: String // We can use formatted string or timestamp
+    val date: String
 )

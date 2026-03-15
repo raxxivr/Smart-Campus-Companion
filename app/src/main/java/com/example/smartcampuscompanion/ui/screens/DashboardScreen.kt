@@ -27,10 +27,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.data.Announcement
 import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
+import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -42,6 +44,7 @@ fun DashboardScreen(
     studentNumber: String?,
     course: String?,
     taskViewModel: TaskViewModel,
+    announcementViewModel: AnnouncementViewModel,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
@@ -92,6 +95,7 @@ fun DashboardScreen(
             studentNumber = studentNumber,
             course = course,
             taskViewModel = taskViewModel,
+            announcementViewModel = announcementViewModel,
             onAnnouncementsClick = onAnnouncementsClick,
             onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
@@ -105,11 +109,14 @@ fun DashboardContent(
     studentNumber: String?,
     course: String?,
     taskViewModel: TaskViewModel,
+    announcementViewModel: AnnouncementViewModel,
     onAnnouncementsClick: () -> Unit,
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
+    val announcements by announcementViewModel.allAnnouncements.collectAsState()
+    val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
     
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
@@ -126,7 +133,6 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Header Section
         item {
             Column {
                 Text(
@@ -142,7 +148,6 @@ fun DashboardContent(
             }
         }
 
-        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -153,7 +158,6 @@ fun DashboardContent(
             )
         }
 
-        // Featured Events Section
         item {
             Column {
                 SectionHeader(title = "Featured Events")
@@ -174,7 +178,6 @@ fun DashboardContent(
             }
         }
 
-        // Recent Announcements Section
         item {
             Column {
                 SectionHeader(
@@ -182,16 +185,15 @@ fun DashboardContent(
                     onViewAllClick = onAnnouncementsClick
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                AnnouncementItem(
-                    title = "Library Hours Extension",
-                    desc = "The main library will be open until midnight during finals week.",
-                    time = "2h ago"
-                )
-                AnnouncementItem(
-                    title = "New Canteen Menu",
-                    desc = "Check out the healthy options available starting tomorrow at the student center.",
-                    time = "5h ago"
-                )
+                
+                if (announcements.isEmpty()) {
+                    Text("No announcements available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                } else {
+                    announcements.take(3).forEach { announcement ->
+                        val isRead = readAnnouncementIds.contains(announcement.id)
+                        AnnouncementItem(announcement = announcement, isRead = isRead)
+                    }
+                }
             }
         }
     }
@@ -376,12 +378,17 @@ fun EventCard(title: String, imageRes: Int) {
 }
 
 @Composable
-fun AnnouncementItem(title: String, desc: String, time: String) {
+fun AnnouncementItem(announcement: Announcement, isRead: Boolean) {
+    val backgroundColor = if (isRead) Color(0xFFF5F5F5) else Color.White
+    val contentAlpha = if (isRead) 0.6f else 1f
+
     Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        elevation = CardDefaults.cardElevation(if (isRead) 0.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -389,12 +396,17 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(40.dp)
                     .clip(CircleShape)
-                    .background(TealPrimary.copy(alpha = 0.1f)),
+                    .background(if (isRead) Color.LightGray.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Notifications, contentDescription = null, tint = TealPrimary)
+                Icon(
+                    Icons.Default.Campaign, 
+                    contentDescription = null, 
+                    tint = if (isRead) Color.Gray else TealPrimary,
+                    modifier = Modifier.size(20.dp)
+                )
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -403,19 +415,25 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = title,
+                        text = announcement.title,
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
+                        color = if (isRead) Color.Gray else Color.Black,
                         modifier = Modifier.weight(1f)
                     )
-                    Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(
+                        text = announcement.date, 
+                        style = MaterialTheme.typography.labelSmall, 
+                        color = Color.Gray.copy(alpha = contentAlpha)
+                    )
                 }
                 Text(
-                    text = desc,
+                    text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray,
-                    maxLines = 2
+                    color = Color.DarkGray.copy(alpha = contentAlpha),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

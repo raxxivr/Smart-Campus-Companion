@@ -4,9 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.Announcement
 import com.example.smartcampuscompanion.data.AnnouncementRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
@@ -20,6 +18,20 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
             initialValue = emptyList()
         )
 
+    private val _readAnnouncementIds = MutableStateFlow<Set<Int>>(emptySet())
+    val readAnnouncementIds: StateFlow<Set<Int>> = _readAnnouncementIds.asStateFlow()
+
+    private var currentUserEmail: String = ""
+
+    fun loadReadStatus(email: String) {
+        currentUserEmail = email
+        viewModelScope.launch {
+            repository.getReadAnnouncementIds(email).collectLatest { ids ->
+                _readAnnouncementIds.value = ids.toSet()
+            }
+        }
+    }
+
     fun postAnnouncement(title: String, description: String) {
         val currentDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date())
         viewModelScope.launch {
@@ -30,6 +42,13 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
                     date = currentDate
                 )
             )
+        }
+    }
+
+    fun markAsRead(announcementId: Int) {
+        if (currentUserEmail.isEmpty() || currentUserEmail == "admin@smartcampus.com") return
+        viewModelScope.launch {
+            repository.markAsRead(currentUserEmail, announcementId)
         }
     }
 

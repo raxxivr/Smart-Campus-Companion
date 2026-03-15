@@ -34,7 +34,12 @@ class MainActivity : ComponentActivity() {
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
             val userRepository = remember { UserRepository(taskDatabase.userDao()) }
-            val announcementRepository = remember { AnnouncementRepository(taskDatabase.announcementDao()) }
+            val announcementRepository = remember { 
+                AnnouncementRepository(
+                    taskDatabase.announcementDao(),
+                    taskDatabase.readAnnouncementDao()
+                ) 
+            }
 
             val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager, userRepository)
@@ -59,15 +64,20 @@ class MainActivity : ComponentActivity() {
                 if (sessionManager.isLoggedIn()) "dashboard" else "login"
             }
 
+            // Initialize data for the logged-in user on app launch
             LaunchedEffect(Unit) {
                 sessionManager.getEmail()?.let { email ->
                     taskViewModel.loadTasksForUser(email)
+                    announcementViewModel.loadReadStatus(email)
                 }
             }
 
             LaunchedEffect(isLoggedIn) {
                 if (isLoggedIn) {
-                    loginViewModel.userEmail?.let { taskViewModel.loadTasksForUser(it) }
+                    loginViewModel.userEmail?.let { email ->
+                        taskViewModel.loadTasksForUser(email)
+                        announcementViewModel.loadReadStatus(email)
+                    }
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -96,12 +106,8 @@ class MainActivity : ComponentActivity() {
                             composable("login") {
                                 LoginScreen(
                                     onLoginClick = { email, password ->
-                                        if (email == "admin@smartcampus.com" && password == "admin123") {
-                                            sessionManager.createLoginSession("Admin", email, "ADMIN", "Administrator")
-                                            loginViewModel.login(email, password)
-                                        } else {
-                                            loginViewModel.login(email, password)
-                                        }
+                                        // loginViewModel handles both Admin hardcoded check and DB check
+                                        loginViewModel.login(email, password)
                                     },
                                     onSignUpClick = {
                                         signupViewModel.clearForm()
@@ -137,6 +143,7 @@ class MainActivity : ComponentActivity() {
                                     studentNumber = loginViewModel.studentNumber,
                                     course = loginViewModel.course,
                                     taskViewModel = taskViewModel,
+                                    announcementViewModel = announcementViewModel,
                                     onAnnouncementsClick = { navController.navigate("announcements") },
                                     onTasksClick = { navController.navigate("task_manager") },
                                     onCampusInfoClick = { navController.navigate("campus_info") },

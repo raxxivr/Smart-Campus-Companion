@@ -11,6 +11,9 @@ interface AnnouncementDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(announcement: Announcement)
 
+    @Update
+    suspend fun update(announcement: Announcement)
+
     @Delete
     suspend fun delete(announcement: Announcement)
 }

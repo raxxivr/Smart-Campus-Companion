@@ -7,12 +7,13 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Task::class, User::class, Announcement::class], version = 5, exportSchema = false)
+@Database(entities = [Task::class, User::class, Announcement::class, ReadAnnouncement::class], version = 7, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
     abstract fun userDao(): UserDao
     abstract fun announcementDao(): AnnouncementDao
+    abstract fun readAnnouncementDao(): ReadAnnouncementDao
 
     companion object {
         @Volatile
@@ -36,10 +37,22 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
 
-        // Migration from 4 to 5: adds the 'announcements' table
         val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `announcements` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `description` TEXT NOT NULL, `date` TEXT NOT NULL)")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE announcements ADD COLUMN isRead INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        // Migration from 6 to 7: adds the 'read_announcements' cross-reference table
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `read_announcements` (`userEmail` TEXT NOT NULL, `announcementId` INTEGER NOT NULL, PRIMARY KEY(`userEmail`, `announcementId`))")
             }
         }
 
@@ -50,7 +63,7 @@ abstract class TaskDatabase : RoomDatabase() {
                     TaskDatabase::class.java,
                     "task_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                 .build()
                 INSTANCE = instance
                 instance
