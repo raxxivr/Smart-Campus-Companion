@@ -53,30 +53,33 @@ fun DashboardScreen(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "App Logo",
-                            modifier = Modifier.size(32.dp).clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "Smart Campus Companion",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TealPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = TealPrimary,
-                    navigationIconContentColor = TealPrimary
-                ),
-                windowInsets = WindowInsets.statusBars
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = "App Logo",
+                                modifier = Modifier.size(32.dp).clip(CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "Smart Campus Companion",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TealPrimary
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = TealPrimary,
+                        navigationIconContentColor = TealPrimary
+                    ),
+                    windowInsets = WindowInsets.statusBars
+                )
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            }
         },
         bottomBar = {
             BottomNavBar(
@@ -194,12 +197,35 @@ fun DashboardContent(
                 
                 val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
 
-                if (unreadAnnouncements.isEmpty() && announcements.isEmpty()) {
-                    Text("No announcements available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                if (unreadAnnouncements.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Campaign,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = Color.LightGray
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No new announcements available",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 } else {
-                    val displayAnnouncements = if (unreadAnnouncements.isNotEmpty()) unreadAnnouncements else announcements
-                    displayAnnouncements.take(3).forEach { announcement ->
-                        AnnouncementItem(announcement = announcement, isRead = readAnnouncementIds.contains(announcement.id))
+                    unreadAnnouncements.take(3).forEach { announcement ->
+                        AnnouncementItem(
+                            announcement = announcement, 
+                            isRead = false,
+                            onMarkAsRead = { /* Dashboard items are not clickable for marking read as per requirement */ }
+                        )
                     }
                 }
             }
@@ -392,8 +418,7 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
+        verticalAlignment = Alignment.CenterVertically) {
         Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         if (onViewAllClick != {}) {
             TextButton(onClick = onViewAllClick) {
@@ -404,7 +429,7 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
 }
 
 @Composable
-fun AnnouncementItem(announcement: Announcement, isRead: Boolean) {
+fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: () -> Unit) {
     val backgroundColor = if (isRead) Color(0xFFF5F5F5) else Color.White
     val contentAlpha = if (isRead) 0.6f else 1f
 

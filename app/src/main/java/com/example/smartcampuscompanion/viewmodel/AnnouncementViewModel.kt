@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.Announcement
 import com.example.smartcampuscompanion.data.AnnouncementRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -22,14 +23,24 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
     val readAnnouncementIds: StateFlow<Set<Int>> = _readAnnouncementIds.asStateFlow()
 
     private var currentUserEmail: String = ""
+    private var readStatusJob: Job? = null
 
     fun loadReadStatus(email: String) {
+        if (currentUserEmail == email && readStatusJob?.isActive == true) return
+        
         currentUserEmail = email
-        viewModelScope.launch {
+        readStatusJob?.cancel()
+        readStatusJob = viewModelScope.launch {
             repository.getReadAnnouncementIds(email).collectLatest { ids ->
                 _readAnnouncementIds.value = ids.toSet()
             }
         }
+    }
+
+    fun clearData() {
+        currentUserEmail = ""
+        readStatusJob?.cancel()
+        _readAnnouncementIds.value = emptySet()
     }
 
     fun postAnnouncement(title: String, description: String) {

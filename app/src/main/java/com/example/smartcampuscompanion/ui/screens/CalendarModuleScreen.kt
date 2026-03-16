@@ -56,13 +56,21 @@ fun CalendarModuleScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Calendar", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = TealPrimary,
-                    titleContentColor = Color.White
+            Column {
+                TopAppBar(
+                    title = { Text("Calendar", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = TealPrimary
+                    )
                 )
-            )
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            }
         }
     ) { padding ->
         LazyColumn(
