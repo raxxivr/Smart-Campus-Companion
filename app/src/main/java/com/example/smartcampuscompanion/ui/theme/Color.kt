@@ -2,6 +2,13 @@ package com.example.smartcampuscompanion.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+val TealPrimary = Color(0xFF00CFD5)
+val TealSecondary = Color(0xFF00B2B8)
+val TealTertiary = Color(0xFF00838F)
+
+val DarkGray = Color(0xFF1C1B1F)
+val LightGray = Color(0xFFF5F5F5)
+
 val Purple80 = Color(0xFFD0BCFF)
 val PurpleGrey80 = Color(0xFFCCC2DC)
 val Pink80 = Color(0xFFEFB8C8)
