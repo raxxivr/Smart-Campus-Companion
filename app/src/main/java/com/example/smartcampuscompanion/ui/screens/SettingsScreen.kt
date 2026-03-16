@@ -65,21 +65,22 @@ fun SettingsScreen(
     }
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Settings",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TealPrimary
-                    )
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = TealPrimary
-                ),
-                windowInsets = WindowInsets.statusBars
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            text = "Settings",
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = TealPrimary
+                    ),
+                    windowInsets = WindowInsets.statusBars
+                )
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            }
         },
         bottomBar = {
             BottomNavBar(
@@ -296,22 +297,6 @@ private fun SettingsInfoRow(
             text  = value,
             style = MaterialTheme.typography.bodyMedium,
             color = Color.Gray
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    SmartCampusCompanionTheme {
-        SettingsScreen(
-            username  = "student",
-            onLogout  = {},
-            viewModel = viewModel(),
-            onHomeClick = {},
-            onAnnouncementsClick = {},
-            onTasksClick = {},
-            onCampusClick = {}
         )
     }
 }

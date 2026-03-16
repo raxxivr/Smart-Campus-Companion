@@ -58,12 +58,10 @@ fun CalendarModuleScreen(
         topBar = {
             CenterAlignedTopAppBar(
                 title = { Text("Calendar", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = Color.White)
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = TealPrimary,
+                    titleContentColor = Color.White
+                )
             )
         }
     ) { padding ->

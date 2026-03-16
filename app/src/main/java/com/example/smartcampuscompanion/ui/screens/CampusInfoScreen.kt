@@ -36,7 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.data.Department
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.ui.viewmodel.CampusInfoViewModel
+import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +48,7 @@ fun CampusInfoScreen(
     onSettingsClick: () -> Unit,
     viewModel: CampusInfoViewModel = viewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val departments by viewModel.departments.collectAsStateWithLifecycle()
     var selectedDepartment by remember { mutableStateOf<Department?>(null) }
 
     if (selectedDepartment != null) {
@@ -62,25 +62,21 @@ fun CampusInfoScreen(
     } else {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Text(
-                            text = "Campus Info",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = TealPrimary
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Campus Information",
+                                fontWeight = FontWeight.Bold
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.White,
+                            titleContentColor = TealPrimary
                         )
-                    },
-                    navigationIcon = {
-                        IconButton(onClick = onBackClick) {
-                            Icon(Icons.Filled.ArrowBack, contentDescription = "Back", tint = TealPrimary)
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
-                        titleContentColor = TealPrimary
                     )
-                )
+                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                }
             },
             bottomBar = {
                 BottomNavBar(
@@ -106,7 +102,7 @@ fun CampusInfoScreen(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(uiState.departments) { department ->
+                items(departments) { department ->
                     DepartmentDashboardCard(
                         department = department,
                         onClick = { selectedDepartment = department }
@@ -245,13 +241,18 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = { Text(department.name, fontSize = 16.sp, fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = TealPrimary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
             )
         }
     ) { padding ->

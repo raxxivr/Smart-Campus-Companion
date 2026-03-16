@@ -3,17 +3,16 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
-    id("com.google.devtools.ksp") version "2.0.21-1.0.27"
 }
 
 android {
     namespace = "com.example.smartcampuscompanion"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.smartcampuscompanion"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 
@@ -42,7 +41,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.compose.foundation)
     val roomVersion = "2.6.1"
 
     implementation(libs.androidx.core.ktx)
@@ -53,11 +51,13 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.animation.core.lint)
     implementation(libs.androidx.compose.ui.text)
     implementation(libs.androidx.compose.animation)
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")

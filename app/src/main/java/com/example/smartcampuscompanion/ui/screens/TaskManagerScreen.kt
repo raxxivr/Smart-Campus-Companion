@@ -54,22 +54,21 @@ fun TaskManagerScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { 
-                    Text(
-                        "Task Manager", 
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = TealPrimary
-                    ) 
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
+            Column {
+                TopAppBar(
+                    title = { 
+                        Text(
+                            "Task Manager", 
+                            fontWeight = FontWeight.Bold
+                        ) 
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = TealPrimary
+                    )
+                )
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            }
         },
         bottomBar = {
             BottomNavBar(

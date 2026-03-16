@@ -5,8 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,23 +14,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.data.Announcement
+import com.example.smartcampuscompanion.data.Department
 import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
-import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
+import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModel
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,6 +43,7 @@ fun DashboardScreen(
     course: String?,
     taskViewModel: TaskViewModel,
     announcementViewModel: AnnouncementViewModel,
+    campusViewModel: CampusInfoViewModel,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
@@ -96,7 +95,9 @@ fun DashboardScreen(
             course = course,
             taskViewModel = taskViewModel,
             announcementViewModel = announcementViewModel,
+            campusViewModel = campusViewModel,
             onAnnouncementsClick = onAnnouncementsClick,
+            onCampusInfoClick = onCampusInfoClick,
             onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
         )
@@ -110,12 +111,15 @@ fun DashboardContent(
     course: String?,
     taskViewModel: TaskViewModel,
     announcementViewModel: AnnouncementViewModel,
+    campusViewModel: CampusInfoViewModel,
     onAnnouncementsClick: () -> Unit,
+    onCampusInfoClick: () -> Unit,
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
     val announcements by announcementViewModel.allAnnouncements.collectAsState()
+    val departments by campusViewModel.departments.collectAsState()
     val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
     
     val calendar = Calendar.getInstance()
@@ -160,22 +164,20 @@ fun DashboardContent(
             )
         }
 
-        // Featured Events Section
+        // Campus Info Preview Section
         item {
             Column {
-                SectionHeader(title = "Featured Events")
+                SectionHeader(
+                    title = "Campus Info Overview",
+                    onViewAllClick = onCampusInfoClick
+                )
                 Spacer(modifier = Modifier.height(12.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    val events = listOf(
-                        Pair("Art Exhibition", R.drawable.art_exhibit_image),
-                        Pair("Tech Summit", R.drawable.tech_summit_image),
-                        Pair("Career Fair", R.drawable.career_fair_image)
-                    )
-                    items(events) { event ->
-                        EventCard(title = event.first, imageRes = event.second)
+                
+                if (departments.isEmpty()) {
+                    Text("No campus info available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                } else {
+                    departments.take(3).forEach { department ->
+                        CampusInfoPreviewItem(department = department, onClick = onCampusInfoClick)
                     }
                 }
             }
@@ -190,16 +192,77 @@ fun DashboardContent(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 
-                // Filter out announcements that have been read by the current student
                 val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
 
-                if (unreadAnnouncements.isEmpty()) {
-                    Text("No new announcements.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                if (unreadAnnouncements.isEmpty() && announcements.isEmpty()) {
+                    Text("No announcements available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
                 } else {
-                    unreadAnnouncements.take(3).forEach { announcement ->
-                        AnnouncementItem(announcement = announcement, isRead = false)
+                    val displayAnnouncements = if (unreadAnnouncements.isNotEmpty()) unreadAnnouncements else announcements
+                    displayAnnouncements.take(3).forEach { announcement ->
+                        AnnouncementItem(announcement = announcement, isRead = readAnnouncementIds.contains(announcement.id))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
+    val isOpen = department.isOpen()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = department.iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = department.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = department.location,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
+            Surface(
+                color = if (isOpen) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFFF44336).copy(alpha = 0.1f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = if (isOpen) "OPEN" else "CLOSED",
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336),
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -332,52 +395,9 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        TextButton(onClick = onViewAllClick) {
-            Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
-        }
-    }
-}
-
-@Composable
-fun EventCard(title: String, imageRes: Int) {
-    Card(
-        modifier = Modifier.width(240.dp).height(140.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = imageRes),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Feb 28 • Main Ground",
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelSmall
-                )
+        if (onViewAllClick != {}) {
+            TextButton(onClick = onViewAllClick) {
+                Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

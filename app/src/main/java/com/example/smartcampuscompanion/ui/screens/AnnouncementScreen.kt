@@ -41,19 +41,16 @@ fun AnnouncementScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = { Text("Announcements", fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = TealPrimary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+            Column {
+                TopAppBar(
+                    title = { Text("Announcements", fontWeight = FontWeight.Bold) },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White,
+                        titleContentColor = TealPrimary
+                    )
                 )
-            )
+                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+            }
         },
         bottomBar = {
             BottomNavBar(
