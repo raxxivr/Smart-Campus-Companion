@@ -75,7 +75,10 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(isLoggedIn, showSplash) {
                 if (!showSplash) {
                     if (isLoggedIn) {
-                        loginViewModel.userEmail?.let { taskViewModel.loadTasksForUser(it) }
+                        loginViewModel.userEmail?.let { email ->
+                            taskViewModel.loadTasksForUser(email)
+                            announcementViewModel.loadReadStatus(email)
+                        }
                         navController.navigate("dashboard") {
                             popUpTo("login") { inclusive = true }
                         }
