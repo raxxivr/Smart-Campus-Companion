@@ -3,7 +3,7 @@ package com.example.smartcampuscompanion.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.smartcampuscompanion.data.SessionManager
-import com.example.smartcampuscompanion.data.UserRepository
+import com.example.smartcampuscompanion.domain.repository.UserRepository
 
 class LoginViewModelFactory(
     private val sessionManager: SessionManager,

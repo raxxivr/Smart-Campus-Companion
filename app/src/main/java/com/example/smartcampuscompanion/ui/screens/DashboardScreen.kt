@@ -24,9 +24,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
-import com.example.smartcampuscompanion.data.Announcement
+import com.example.smartcampuscompanion.domain.model.Announcement
 import com.example.smartcampuscompanion.data.Department
-import com.example.smartcampuscompanion.data.Task
+import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
@@ -320,126 +320,92 @@ fun CalendarWidget(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(end = 24.dp)
+                modifier = Modifier
+                    .width(60.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(TealPrimary.copy(alpha = 0.1f))
+                    .padding(vertical = 8.dp)
             ) {
-                Text(
-                    text = dayName.take(3).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
                 Text(
                     text = dayNumber,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = TealPrimary
+                )
+                Text(
+                    text = dayName.take(3).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = TealPrimary
                 )
             }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color.LightGray.copy(alpha = 0.5f))
-            )
-
-            Column(
-                modifier = Modifier
-                    .padding(start = 24.dp)
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (isTomorrow) {
-                    Text(
-                        "Tomorrow's Reminder:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TealPrimary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-                
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = if (isTomorrow) "Upcoming for Tomorrow" else "Your Schedule for Today",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(4.dp))
                 if (tasksToShow.isEmpty()) {
                     Text(
-                        "No tasks today",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
+                        text = "You're all caught up! No tasks due.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.DarkGray,
+                        fontWeight = FontWeight.Bold
                     )
                 } else {
-                    tasksToShow.take(2).forEachIndexed { index, task ->
-                        UpcomingItem(
-                            title = task.title,
-                            time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
-                            category = task.category
-                        )
-                        if (index == 0 && tasksToShow.size > 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
+                    Text(
+                        text = "${tasksToShow.size} tasks: ${tasksToShow.first().title}${if (tasksToShow.size > 1) "..." else ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.DarkGray,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun UpcomingItem(title: String, time: String, category: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(TealPrimary)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "$time • $category",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color.LightGray
             )
         }
     }
 }
 
 @Composable
-fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
+fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        if (onViewAllClick != {}) {
-            TextButton(onClick = onViewAllClick) {
-                Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
-            }
-        }
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.ExtraBold
+        )
+        Text(
+            text = "View All",
+            style = MaterialTheme.typography.labelLarge,
+            color = TealPrimary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onViewAllClick() }
+        )
     }
 }
 
 @Composable
 fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: () -> Unit) {
-    val backgroundColor = if (isRead) Color(0xFFF5F5F5) else Color.White
-    val contentAlpha = if (isRead) 0.6f else 1f
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = backgroundColor),
-        elevation = CardDefaults.cardElevation(if (isRead) 0.dp else 1.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -449,41 +415,25 @@ fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: 
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(if (isRead) Color.LightGray.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f)),
+                    .background(TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    Icons.Default.Campaign, 
-                    contentDescription = null, 
-                    tint = if (isRead) Color.Gray else TealPrimary,
-                    modifier = Modifier.size(20.dp)
-                )
+                Icon(Icons.Default.Campaign, contentDescription = null, tint = TealPrimary)
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(
-                        text = announcement.title,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        color = if (isRead) Color.Gray else Color.Black,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = announcement.date, 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = Color.Gray.copy(alpha = contentAlpha)
-                    )
-                }
+                Text(
+                    text = announcement.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
                 Text(
                     text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray.copy(alpha = contentAlpha),
-                    maxLines = 2,
+                    color = Color.Gray,
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
             }

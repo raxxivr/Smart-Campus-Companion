@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.SessionManager
-import com.example.smartcampuscompanion.data.UserRepository
+import com.example.smartcampuscompanion.domain.repository.UserRepository
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,7 +41,6 @@ class LoginViewModel(
 
         viewModelScope.launch {
             _isLoading.value = true
-            delay(1500)
             
             // Hardcoded Admin check
             if (trimmedEmail == "admin@smartcampus.com" && trimmedPassword == "admin123") {
@@ -59,9 +58,9 @@ class LoginViewModel(
                 _isLoggedIn.value = true
                 _loginError.value = null
             } else {
-                val user = userRepository.getUserByEmail(trimmedEmail)
+                val result = userRepository.loginUser(trimmedEmail, trimmedPassword)
 
-                if (user != null && user.password == trimmedPassword) {
+                result.onSuccess { user ->
                     sessionManager.createLoginSession(
                         fullName = user.fullName,
                         email = user.email,
@@ -75,10 +74,8 @@ class LoginViewModel(
                     
                     _isLoggedIn.value = true
                     _loginError.value = null
-                } else if (user == null) {
-                    _loginError.value = "No account found with this email."
-                } else {
-                    _loginError.value = "Invalid Password"
+                }.onFailure { exception ->
+                    _loginError.value = exception.message ?: "Login failed"
                 }
             }
             _isLoading.value = false
@@ -88,7 +85,7 @@ class LoginViewModel(
     fun logout() {
         viewModelScope.launch {
             _isLoading.value = true
-            delay(1000)
+            userRepository.logout()
             sessionManager.logout()
             _currentUserFullName.value = null
             _currentUserEmail.value = null
