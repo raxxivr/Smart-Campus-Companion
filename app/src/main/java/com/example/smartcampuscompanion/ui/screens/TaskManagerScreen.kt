@@ -22,7 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartcampuscompanion.data.Task
+import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
@@ -36,6 +36,7 @@ fun TaskManagerScreen(
     onBackClick: () -> Unit,
     onHomeClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
+    onTasksClick: () -> Unit,
     onCampusClick: () -> Unit,
     onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier
