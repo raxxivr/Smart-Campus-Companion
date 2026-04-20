@@ -18,9 +18,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.smartcampuscompanion.data.*
+import com.example.smartcampuscompanion.data.repository.FirebaseUserRepository
+import com.example.smartcampuscompanion.data.repository.SmartCampusAnnouncementRepository
+import com.example.smartcampuscompanion.data.repository.SmartCampusTaskRepository
 import com.example.smartcampuscompanion.ui.screens.*
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.viewmodel.*
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
 
@@ -28,24 +33,33 @@ class MainActivity : ComponentActivity() {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         
-        // Hand off to Compose immediately
         splashScreen.setKeepOnScreenCondition { false }
         
         enableEdgeToEdge()
 
         setContent {
             val context = LocalContext.current
-            val sessionManager = remember { SessionManager(context) }
+            
+            // Firebase Instances
+            val auth = remember { FirebaseAuth.getInstance() }
+            val firestore = remember { FirebaseFirestore.getInstance() }
+            
+            // Local Database
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
-            val taskRepository = remember { TaskRepository(taskDatabase.taskDao()) }
-            val userRepository = remember { UserRepository(taskDatabase.userDao()) }
+            
+            // Repositories (New Cloud Sync Implementations)
+            val sessionManager = remember { SessionManager(context) }
+            val userRepository = remember { 
+                FirebaseUserRepository(auth, firestore, taskDatabase.userDao()) 
+            }
+            val taskRepository = remember { 
+                SmartCampusTaskRepository(firestore, taskDatabase.taskDao()) 
+            }
             val announcementRepository = remember { 
-                AnnouncementRepository(
-                    taskDatabase.announcementDao(),
-                    taskDatabase.readAnnouncementDao()
-                ) 
+                SmartCampusAnnouncementRepository(firestore, taskDatabase.announcementDao()) 
             }
 
+            // ViewModels
             val loginViewModel: LoginViewModel = viewModel(
                 factory = LoginViewModelFactory(sessionManager, userRepository)
             )
