@@ -39,7 +39,19 @@ class FirebaseUserRepository(
             
             // Fetch from Firestore to get role and full data
             val document = firestore.collection("users").document(uid).get().await()
-            val user = document.toObject(User::class.java) ?: return Result.failure(Exception("User not found"))
+            
+            if (!document.exists()) {
+                return Result.failure(Exception("User profile not found in Firestore"))
+            }
+
+            // Manual mapping to avoid deserialization errors with data classes
+            val user = User(
+                email = document.getString("email") ?: "",
+                fullName = document.getString("fullName") ?: "",
+                studentNumber = document.getString("studentNumber") ?: "",
+                course = document.getString("course") ?: "",
+                role = document.getString("role") ?: "student"
+            )
             
             // Update Local Room
             userDao.insert(user.toEntity(password))
@@ -56,7 +68,17 @@ class FirebaseUserRepository(
         
         return try {
             val document = firestore.collection("users").document(uid).get().await()
-            document.toObject(User::class.java)
+            if (document.exists()) {
+                User(
+                    email = document.getString("email") ?: "",
+                    fullName = document.getString("fullName") ?: "",
+                    studentNumber = document.getString("studentNumber") ?: "",
+                    course = document.getString("course") ?: "",
+                    role = document.getString("role") ?: "student"
+                )
+            } else {
+                userDao.getUserByEmail(firebaseUser.email ?: "")?.toDomain()
+            }
         } catch (e: Exception) {
             // Fallback to local if offline
             userDao.getUserByEmail(firebaseUser.email ?: "")?.toDomain()

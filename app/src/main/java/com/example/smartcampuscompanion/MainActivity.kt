@@ -117,6 +117,7 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 composable("login") {
                                     LoginScreen(
+                                        viewModel = loginViewModel,
                                         onLoginClick = { email, password ->
                                             loginViewModel.login(email, password)
                                         },
@@ -194,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                         onBackClick = { navController.popBackStack() },
                                         onHomeClick = { navController.navigate("dashboard") },
                                         onAnnouncementsClick = { navController.navigate("announcements") },
+                                        onTasksClick = { /* Already here */ },
                                         onCampusClick = { navController.navigate("campus_info") },
                                         onSettingsClick = { navController.navigate("settings") }
                                     )
