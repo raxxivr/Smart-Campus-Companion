@@ -1,23 +1,23 @@
 package com.example.smartcampuscompanion.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-class SettingsViewModel : ViewModel() {
+class SettingsViewModel(private val repository: UserPreferencesRepository) : ViewModel() {
 
-    private val _notificationsEnabled = mutableStateOf(true)
-    val notificationsEnabled: State<Boolean> = _notificationsEnabled
+    val notificationsEnabled: StateFlow<Boolean> = repository.notificationsFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
-    private val _darkModeEnabled = mutableStateOf(false)
-    val darkModeEnabled: State<Boolean> = _darkModeEnabled
+    val darkModeEnabled: StateFlow<Boolean> = repository.darkModeFlow
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun toggleNotifications(enabled: Boolean) {
-        _notificationsEnabled.value = enabled
+        viewModelScope.launch { repository.updateNotifications(enabled) }
     }
 
     fun toggleDarkMode(enabled: Boolean) {
-        _darkModeEnabled.value = enabled
+        viewModelScope.launch { repository.updateDarkMode(enabled) }
     }
 }
-
