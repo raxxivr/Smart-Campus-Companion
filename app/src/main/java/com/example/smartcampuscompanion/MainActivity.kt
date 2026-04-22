@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
             // Local Database
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             
-            // Repositories (New Cloud Sync Implementations)
+            // Repositories
             val sessionManager = remember { SessionManager(context) }
             val userRepository = remember { 
                 FirebaseUserRepository(auth, firestore, taskDatabase.userDao()) 
@@ -160,6 +160,9 @@ class MainActivity : ComponentActivity() {
                                         onSignUpClick = {
                                             signupViewModel.clearForm()
                                             navController.navigate("signup")
+                                        },
+                                        onGoogleSignInClick = {
+                                            Toast.makeText(context, "Google Sign-In coming soon!", Toast.LENGTH_SHORT).show()
                                         }
                                     )
                                 }
@@ -172,7 +175,10 @@ class MainActivity : ComponentActivity() {
                                         onBackToLoginClick = {
                                             navController.popBackStack()
                                         },
-                                        viewModel = signupViewModel
+                                        viewModel = signupViewModel,
+                                        onGoogleSignupClick = {
+                                             Toast.makeText(context, "Google Sign-Up coming soon!", Toast.LENGTH_SHORT).show()
+                                        }
                                     )
                                     
                                     val uiState by signupViewModel.uiState.collectAsState()
@@ -187,12 +193,8 @@ class MainActivity : ComponentActivity() {
 
                                 composable("dashboard") {
                                     DashboardScreen(
-                                        fullName = loginViewModel.fullName,
-                                        studentNumber = loginViewModel.studentNumber,
-                                        course = loginViewModel.course,
+                                        username = loginViewModel.fullName,
                                         taskViewModel = taskViewModel,
-                                        announcementViewModel = announcementViewModel,
-                                        campusViewModel = campusInfoViewModel,
                                         onAnnouncementsClick = { navController.navigate("announcements") },
                                         onTasksClick = { navController.navigate("task_manager") },
                                         onCampusInfoClick = { navController.navigate("campus_info") },
@@ -202,7 +204,7 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable("announcements") {
-                                    val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com"
+                                    val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com" || loginViewModel.role == "ADMIN"
                                     AnnouncementScreen(
                                         isAdmin = isAdmin,
                                         viewModel = announcementViewModel,
