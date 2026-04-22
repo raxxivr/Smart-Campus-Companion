@@ -129,7 +129,9 @@ class MainActivity : ComponentActivity() {
                             taskViewModel.loadTasksForUser(email)
                             announcementViewModel.loadReadStatus(email)
                         }
-                        navController.navigate("dashboard") {
+                        
+                        val destination = if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                        navController.navigate(destination) {
                             popUpTo("login") { inclusive = true }
                         }
                     } else {
@@ -148,7 +150,9 @@ class MainActivity : ComponentActivity() {
                         Box(modifier = Modifier.fillMaxSize()) {
                             NavHost(
                                 navController = navController,
-                                startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "login",
+                                startDestination = if (sessionManager.isLoggedIn()) {
+                                    if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                                } else "login",
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable("login") {
@@ -180,36 +184,48 @@ class MainActivity : ComponentActivity() {
                                              Toast.makeText(context, "Google Sign-Up coming soon!", Toast.LENGTH_SHORT).show()
                                         }
                                     )
-                                    
-                                    val uiState by signupViewModel.uiState.collectAsState()
-                                    if (uiState.isSignupSuccessful) {
-                                        LaunchedEffect(Unit) {
-                                            Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                                            signupViewModel.resetSignupSuccess()
-                                            navController.popBackStack()
-                                        }
-                                    }
                                 }
 
                                 composable("dashboard") {
-                                    DashboardScreen(
-                                        username = loginViewModel.fullName,
-                                        taskViewModel = taskViewModel,
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { navController.navigate("task_manager") },
-                                        onCampusInfoClick = { navController.navigate("campus_info") },
-                                        onSettingsClick = { navController.navigate("settings") },
-                                        onCalendarClick = { navController.navigate("calendar_module") }
-                                    )
+                                    // SECURITY GUARD: Check if user is Admin and redirect if necessary
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        DashboardScreen(
+                                            username = loginViewModel.fullName,
+                                            taskViewModel = taskViewModel,
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { navController.navigate("task_manager") },
+                                            onCampusInfoClick = { navController.navigate("campus_info") },
+                                            onSettingsClick = { navController.navigate("settings") },
+                                            onCalendarClick = { navController.navigate("calendar_module") }
+                                        )
+                                    }
+                                }
+
+                                composable("admin_dashboard") {
+                                    // SECURITY GUARD: Check if user is NOT Admin and redirect if necessary
+                                    if (sessionManager.getRole() != "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("dashboard") }
+                                    } else {
+                                        AdminDashboardScreen(
+                                            loginViewModel = loginViewModel,
+                                            announcementViewModel = announcementViewModel,
+                                            onLogoutClick = { loginViewModel.logout() }
+                                        )
+                                    }
                                 }
 
                                 composable("announcements") {
-                                    val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com" || loginViewModel.role == "ADMIN"
+                                    val isAdmin = sessionManager.getRole() == "ADMIN"
                                     AnnouncementScreen(
                                         isAdmin = isAdmin,
                                         viewModel = announcementViewModel,
                                         onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
+                                        onHomeClick = { 
+                                            val dest = if (isAdmin) "admin_dashboard" else "dashboard"
+                                            navController.navigate(dest) 
+                                        },
                                         onTasksClick = { navController.navigate("task_manager") },
                                         onCampusClick = { navController.navigate("campus_info") },
                                         onSettingsClick = { navController.navigate("settings") }
@@ -217,26 +233,36 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable("campus_info") {
-                                    CampusInfoScreen(
-                                        onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { navController.navigate("task_manager") },
-                                        onSettingsClick = { navController.navigate("settings") },
-                                        viewModel = campusInfoViewModel
-                                    )
+                                    // SECURITY GUARD: Prevent Admin from accessing Student-only info
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        CampusInfoScreen(
+                                            onBackClick = { navController.popBackStack() },
+                                            onHomeClick = { navController.navigate("dashboard") },
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { navController.navigate("task_manager") },
+                                            onSettingsClick = { navController.navigate("settings") },
+                                            viewModel = campusInfoViewModel
+                                        )
+                                    }
                                 }
 
                                 composable("task_manager") {
-                                    TaskManagerScreen(
-                                        viewModel = taskViewModel,
-                                        onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { /* Already here */ },
-                                        onCampusClick = { navController.navigate("campus_info") },
-                                        onSettingsClick = { navController.navigate("settings") }
-                                    )
+                                    // SECURITY GUARD: Prevent Admin from accessing Student-only tasks
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        TaskManagerScreen(
+                                            viewModel = taskViewModel,
+                                            onBackClick = { navController.popBackStack() },
+                                            onHomeClick = { navController.navigate("dashboard") },
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { /* Already here */ },
+                                            onCampusClick = { navController.navigate("campus_info") },
+                                            onSettingsClick = { navController.navigate("settings") }
+                                        )
+                                    }
                                 }
 
                                 composable("calendar_module") {
@@ -248,10 +274,13 @@ class MainActivity : ComponentActivity() {
 
                                 composable("settings") {
                                     SettingsScreen(
-                                        username = loginViewModel.fullName ?: loginViewModel.userEmail ?: "student",
+                                        username = loginViewModel.fullName ?: loginViewModel.userEmail ?: "User",
                                         onLogout = { loginViewModel.logout() },
                                         viewModel = settingsViewModel,
-                                        onHomeClick = { navController.navigate("dashboard") },
+                                        onHomeClick = { 
+                                            val dest = if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                                            navController.navigate(dest) 
+                                        },
                                         onAnnouncementsClick = { navController.navigate("announcements") },
                                         onTasksClick = { navController.navigate("task_manager") },
                                         onCampusClick = { navController.navigate("campus_info") }

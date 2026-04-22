@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.SessionManager
 import com.example.smartcampuscompanion.domain.repository.UserRepository
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
@@ -34,6 +33,9 @@ class LoginViewModel(
 
     private val _currentCourse = mutableStateOf(sessionManager.getCourse())
     val course: String? get() = _currentCourse.value
+    
+    private val _role = mutableStateOf(sessionManager.getRole())
+    val role: String? get() = _role.value
 
     fun login(email: String, password: String) {
         val trimmedEmail = email.trim()
@@ -48,12 +50,14 @@ class LoginViewModel(
                     fullName = "Admin",
                     email = trimmedEmail,
                     studentNumber = "ADMIN",
-                    course = "Administrator"
+                    course = "Administrator",
+                    role = "ADMIN"
                 )
                 _currentUserFullName.value = "Admin"
                 _currentUserEmail.value = trimmedEmail
                 _currentStudentNumber.value = "ADMIN"
                 _currentCourse.value = "Administrator"
+                _role.value = "ADMIN"
                 
                 _isLoggedIn.value = true
                 _loginError.value = null
@@ -65,12 +69,14 @@ class LoginViewModel(
                         fullName = user.fullName,
                         email = user.email,
                         studentNumber = user.studentNumber,
-                        course = user.course
+                        course = user.course,
+                        role = "STUDENT" // Default role for regular users
                     )
                     _currentUserFullName.value = user.fullName
                     _currentUserEmail.value = user.email
                     _currentStudentNumber.value = user.studentNumber
                     _currentCourse.value = user.course
+                    _role.value = "STUDENT"
                     
                     _isLoggedIn.value = true
                     _loginError.value = null
@@ -91,6 +97,7 @@ class LoginViewModel(
             _currentUserEmail.value = null
             _currentStudentNumber.value = null
             _currentCourse.value = null
+            _role.value = "STUDENT"
             _isLoggedIn.value = false
             _isLoading.value = false
         }
