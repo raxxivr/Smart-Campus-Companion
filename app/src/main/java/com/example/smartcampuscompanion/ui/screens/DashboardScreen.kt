@@ -72,13 +72,13 @@ fun DashboardScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = TealPrimary,
                         navigationIconContentColor = TealPrimary
                     ),
                     windowInsets = WindowInsets.statusBars
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
         },
         bottomBar = {
@@ -136,7 +136,7 @@ fun DashboardContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFFBFBFF)),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
@@ -146,12 +146,13 @@ fun DashboardContent(
                 Text(
                     text = "Hello, ${fullName ?: "student"}!",
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
                 )
                 Text(
                     text = "ID: ${studentNumber ?: "2024-XXXX"} • ${course ?: "Regular Student"}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
@@ -177,7 +178,7 @@ fun DashboardContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 if (departments.isEmpty()) {
-                    Text("No campus info available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                    Text("No campus info available.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
                 } else {
                     departments.take(3).forEach { department ->
                         CampusInfoPreviewItem(department = department, onClick = onCampusInfoClick)
@@ -209,13 +210,13 @@ fun DashboardContent(
                             imageVector = Icons.Default.Campaign,
                             contentDescription = null,
                             modifier = Modifier.size(48.dp),
-                            tint = Color.LightGray
+                            tint = MaterialTheme.colorScheme.outlineVariant
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                         Text(
                             text = "No new announcements available",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -242,7 +243,7 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
             .padding(vertical = 4.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -253,7 +254,7 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(CircleShape)
-                    .background(Color.White),
+                    .background(MaterialTheme.colorScheme.surface),
                 contentAlignment = Alignment.Center
             ) {
                 Image(
@@ -269,13 +270,14 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
                     text = department.name,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = department.location,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             Surface(
@@ -309,7 +311,7 @@ fun CalendarWidget(
             .height(110.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -344,7 +346,7 @@ fun CalendarWidget(
                 Text(
                     text = if (isTomorrow) "Upcoming for Tomorrow" else "Your Schedule for Today",
                     style = MaterialTheme.typography.labelMedium,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(4.dp))
@@ -352,14 +354,14 @@ fun CalendarWidget(
                     Text(
                         text = "You're all caught up! No tasks due.",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
                 } else {
                     Text(
                         text = "${tasksToShow.size} tasks: ${tasksToShow.first().title}${if (tasksToShow.size > 1) "..." else ""}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.DarkGray,
+                        color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -369,7 +371,7 @@ fun CalendarWidget(
             Icon(
                 imageVector = Icons.Default.ChevronRight,
                 contentDescription = null,
-                tint = Color.LightGray
+                tint = MaterialTheme.colorScheme.outlineVariant
             )
         }
     }
@@ -385,7 +387,8 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onBackground
         )
         Text(
             text = "View All",
@@ -404,7 +407,7 @@ fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: 
             .fillMaxWidth()
             .padding(vertical = 4.dp),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -426,13 +429,14 @@ fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: 
                     text = announcement.title,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
