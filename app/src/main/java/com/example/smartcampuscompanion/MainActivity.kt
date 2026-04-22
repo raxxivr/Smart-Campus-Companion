@@ -26,7 +26,6 @@ import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.viewmodel.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
 import com.example.smartcampuscompanion.service.AnnouncementService
 import android.content.Intent
 import android.Manifest
@@ -34,6 +33,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
 
 class MainActivity : ComponentActivity() {
 
@@ -94,6 +95,7 @@ class MainActivity : ComponentActivity() {
             val announcementRepository = remember { 
                 SmartCampusAnnouncementRepository(firestore, taskDatabase.announcementDao()) 
             }
+            val userPrefsRepository = remember { UserPreferencesRepository(context) }
 
             // ViewModels
             val loginViewModel: LoginViewModel = viewModel(
@@ -106,7 +108,9 @@ class MainActivity : ComponentActivity() {
                 factory = AnnouncementViewModelFactory(announcementRepository)
             )
             val campusInfoViewModel: CampusInfoViewModel = viewModel()
-            val settingsViewModel: SettingsViewModel = viewModel()
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(userPrefsRepository)
+            )
             val signupViewModel: SignupViewModel = viewModel(
                 factory = SignupViewModelFactory(userRepository)
             )
@@ -114,6 +118,7 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val isLoggedIn by loginViewModel.isLoggedIn
             var showSplash by remember { mutableStateOf(true) }
+            val darkMode by settingsViewModel.darkModeEnabled.collectAsStateWithLifecycle()
 
             LaunchedEffect(Unit) {
                 sessionManager.getEmail()?.let { email ->
@@ -140,7 +145,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            SmartCampusCompanionTheme {
+            SmartCampusCompanionTheme(darkTheme = darkMode) {
                 if (showSplash) {
                     SplashScreen(onTimeout = { showSplash = false })
                 } else {
@@ -247,6 +252,8 @@ class MainActivity : ComponentActivity() {
                                 composable("settings") {
                                     SettingsScreen(
                                         username = loginViewModel.fullName ?: loginViewModel.userEmail ?: "student",
+                                        studentNumber = loginViewModel.studentNumber,
+                                        course = loginViewModel.course,
                                         onLogout = { loginViewModel.logout() },
                                         viewModel = settingsViewModel,
                                         onHomeClick = { navController.navigate("dashboard") },
