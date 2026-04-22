@@ -16,15 +16,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
-import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.SettingsViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,8 +35,9 @@ fun SettingsScreen(
     onCampusClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val notifications by viewModel.notificationsEnabled
-    val darkMode by viewModel.darkModeEnabled
+    // Kolektahin ang states mula sa ViewModel (Lifecycle-aware)
+    val notifications by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
+    val darkMode by viewModel.darkModeEnabled.collectAsStateWithLifecycle()
 
     var showLogoutDialog by remember { mutableStateOf(false) }
 
@@ -74,12 +72,12 @@ fun SettingsScreen(
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = TealPrimary
                     ),
                     windowInsets = WindowInsets.statusBars
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
         },
         bottomBar = {
@@ -96,11 +94,12 @@ fun SettingsScreen(
         LazyColumn(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color(0xFFFBFBFF))
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+            // Profile Header
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -111,10 +110,11 @@ fun SettingsScreen(
                         Text(
                             text = username?.replaceFirstChar { it.uppercase() } ?: "Student",
                             style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onBackground
                         )
                         Text(
-                            text = "Student",
+                            text = "Student Account",
                             style = MaterialTheme.typography.bodyMedium,
                             color = Color.Gray
                         )
@@ -127,7 +127,7 @@ fun SettingsScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = username?.first()?.uppercaseChar()?.toString() ?: "S",
+                            text = username?.firstOrNull()?.uppercaseChar()?.toString() ?: "S",
                             color = TealPrimary,
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp
@@ -135,18 +135,57 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            // Account Section (UI Polish)
             item {
                 Column {
                     Text(
-                        text = "Preferences",
+                        text = "Account",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Column {
+                            SettingsActionRow(
+                                icon = Icons.Default.Person,
+                                title = "Edit Profile",
+                                onClick = { /* Navigate to Edit Profile */ }
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 16.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant
+                            )
+                            SettingsActionRow(
+                                icon = Icons.Default.Lock,
+                                title = "Security & Privacy",
+                                onClick = { /* Navigate to Security */ }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Preferences Section
+            item {
+                Column {
+                    Text(
+                        text = "Preferences",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column {
@@ -158,7 +197,7 @@ fun SettingsScreen(
                             )
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
-                                color = Color(0xFFF0F0F0)
+                                color = MaterialTheme.colorScheme.outlineVariant
                             )
                             SettingsToggleRow(
                                 icon     = Icons.Default.DarkMode,
@@ -170,18 +209,21 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            // About Section
             item {
                 Column {
                     Text(
                         text = "About",
                         style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         SettingsInfoRow(
@@ -192,6 +234,8 @@ fun SettingsScreen(
                     }
                 }
             }
+
+            // Logout Button
             item {
                 OutlinedButton(
                     onClick  = { showLogoutDialog = true },
@@ -219,6 +263,49 @@ fun SettingsScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun SettingsActionRow(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(TealPrimary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = TealPrimary)
+            }
+            Text(
+                text = title,
+                modifier = Modifier.weight(1f),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = Color.Gray,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -252,7 +339,8 @@ private fun SettingsToggleRow(
             style    = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Switch(
             checked         = checked,
@@ -291,7 +379,8 @@ private fun SettingsInfoRow(
             text  = title,
             modifier = Modifier.weight(1f),
             style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface
         )
         Text(
             text  = value,
