@@ -64,11 +64,11 @@ fun TaskManagerScreen(
                         ) 
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = TealPrimary
                     )
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
         },
         bottomBar = {
@@ -99,7 +99,7 @@ fun TaskManagerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color(0xFFFBFBFF))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -154,9 +154,9 @@ fun TaskManagerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Your Tasks", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Your Tasks", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                         val filteredCount = if (selectedCategory == "All") tasks.size else tasks.count { it.category == selectedCategory }
-                        Text("$filteredCount tasks", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                        Text("$filteredCount tasks", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
 
@@ -207,7 +207,7 @@ fun TaskManagerScreen(
                     TextButton(onClick = {
                         viewModel.deleteTask(taskToDelete!!)
                         taskToDelete = null
-                    }) { Text("Delete", color = Color.Red) }
+                    }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
                 },
                 dismissButton = {
                     TextButton(onClick = { taskToDelete = null }) { Text("Cancel") }
@@ -222,13 +222,13 @@ fun CategoryTab(title: String, isSelected: Boolean, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(24.dp),
-        color = if (isSelected) TealPrimary else Color.White,
-        border = if (isSelected) null else BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
+        color = if (isSelected) TealPrimary else MaterialTheme.colorScheme.surface,
+        border = if (isSelected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Text(
             text = title,
             modifier = Modifier.padding(horizontal = 24.dp, vertical = 10.dp),
-            color = if (isSelected) Color.White else Color.Gray,
+            color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelLarge.copy(
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 fontSize = 14.sp
@@ -250,19 +250,19 @@ fun EmptyCategoryState(category: String) {
             imageVector = Icons.Default.EventNote,
             contentDescription = null,
             modifier = Modifier.size(80.dp),
-            tint = Color.LightGray.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.outlineVariant
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = if (category == "All") "No tasks found" else "No tasks in '$category'",
             style = MaterialTheme.typography.bodyLarge,
-            color = Color.Gray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center
         )
         Text(
             text = "Tap the + button to add one",
             style = MaterialTheme.typography.bodySmall,
-            color = Color.LightGray,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
     }
@@ -270,9 +270,9 @@ fun EmptyCategoryState(category: String) {
 
 @Composable
 fun TaskItemModern(task: Task, onToggle: () -> Unit, onDelete: () -> Unit, onEdit: () -> Unit) {
-    val containerColor = if (task.isCompleted) Color(0xFFF5F5F5) else Color.White
+    val containerColor = if (task.isCompleted) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
     val contentAlpha = if (task.isCompleted) 0.5f else 1f
-    val borderColor = if (task.isCompleted) Color.LightGray else Color.Transparent
+    val borderColor = if (task.isCompleted) MaterialTheme.colorScheme.outlineVariant else Color.Transparent
 
     Card(
         modifier = Modifier
@@ -293,7 +293,7 @@ fun TaskItemModern(task: Task, onToggle: () -> Unit, onDelete: () -> Unit, onEdi
                     .size(24.dp)
                     .clip(RoundedCornerShape(6.dp))
                     .background(if (task.isCompleted) TealPrimary else Color.Transparent)
-                    .border(2.dp, if (task.isCompleted) TealPrimary else Color.LightGray, RoundedCornerShape(6.dp))
+                    .border(2.dp, if (task.isCompleted) TealPrimary else MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
                     .clickable { onToggle() },
                 contentAlignment = Alignment.Center
             ) {
@@ -309,7 +309,7 @@ fun TaskItemModern(task: Task, onToggle: () -> Unit, onDelete: () -> Unit, onEdi
                     text = task.title,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold,
-                    color = if (task.isCompleted) Color.Gray else Color.Black,
+                    color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.padding(bottom = 2.dp)
                 )
                 
@@ -317,32 +317,32 @@ fun TaskItemModern(task: Task, onToggle: () -> Unit, onDelete: () -> Unit, onEdi
                     Text(
                         text = task.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray.copy(alpha = contentAlpha),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Schedule, contentDescription = null, tint = Color.Gray.copy(alpha = contentAlpha), modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha), modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = SimpleDateFormat("MMM dd, yyyy • hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray.copy(alpha = contentAlpha)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Box(
                         modifier = Modifier
-                            .background(if (task.isCompleted) Color.LightGray.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                            .background(if (task.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f) else TealPrimary.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(task.category, style = MaterialTheme.typography.labelSmall, color = if (task.isCompleted) Color.Gray else TealPrimary, fontSize = 10.sp)
+                        Text(task.category, style = MaterialTheme.typography.labelSmall, color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else TealPrimary, fontSize = 10.sp)
                     }
                 }
             }
             
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.4f))
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
             }
         }
     }
