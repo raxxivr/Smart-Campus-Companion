@@ -27,6 +27,8 @@ import com.example.smartcampuscompanion.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     username: String?,
+    studentNumber: String?,
+    course: String?,
     onLogout: () -> Unit,
     viewModel: SettingsViewModel,
     onHomeClick: () -> Unit,
@@ -35,7 +37,6 @@ fun SettingsScreen(
     onCampusClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Kolektahin ang states mula sa ViewModel (Lifecycle-aware)
     val notifications by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
     val darkMode by viewModel.darkModeEnabled.collectAsStateWithLifecycle()
 
