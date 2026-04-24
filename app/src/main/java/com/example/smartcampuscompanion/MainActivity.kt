@@ -34,6 +34,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
+import com.example.smartcampuscompanion.worker.WorkManagerHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -72,6 +73,8 @@ class MainActivity : ComponentActivity() {
         } else {
             startAnnouncementService()
         }
+
+        WorkManagerHelper.scheduleAnnouncementTasks(this)
 
         setContent {
             val context = LocalContext.current
