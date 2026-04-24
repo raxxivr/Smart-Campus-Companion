@@ -26,14 +26,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.ui.components.ErrorDialog
+import com.example.smartcampuscompanion.ui.components.StyledButton
+import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.SignupViewModel
-
 
 @Composable
 fun SignupScreen(
@@ -42,11 +43,8 @@ fun SignupScreen(
     modifier: Modifier = Modifier,
     viewModel: SignupViewModel = viewModel()
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-
     val focusManager = LocalFocusManager.current
-
     val scrollState = rememberScrollState()
 
     LaunchedEffect(uiState.isSignupSuccessful) {
@@ -80,7 +78,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.Person,
                         contentDescription = "Name Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -94,10 +92,10 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
@@ -113,7 +111,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.Email,
                         contentDescription = "Email Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -127,10 +125,10 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
@@ -146,7 +144,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.Badge,
                         contentDescription = "Student Number Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -160,10 +158,10 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
@@ -179,7 +177,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.School,
                         contentDescription = "Course Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -193,10 +191,10 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
@@ -212,7 +210,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Password Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 trailingIcon = {
@@ -220,7 +218,7 @@ fun SignupScreen(
                         Icon(
                             imageVector = if (uiState.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (uiState.passwordVisible) "Hide Password" else "Show Password",
-                            tint = Color(0xFF00CED1)
+                            tint = TealPrimary
                         )
                     }
                 },
@@ -239,10 +237,10 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
@@ -257,7 +255,7 @@ fun SignupScreen(
                     Icon(
                         imageVector = Icons.Default.Lock,
                         contentDescription = "Confirm Password Icon",
-                        tint = Color(0xFF00CED1)
+                        tint = TealPrimary
                     )
                 },
                 trailingIcon = {
@@ -265,7 +263,7 @@ fun SignupScreen(
                         Icon(
                             imageVector = if (uiState.confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                             contentDescription = if (uiState.confirmPasswordVisible) "Hide Password" else "Show Password",
-                            tint = Color(0xFF00CED1)
+                            tint = TealPrimary
                         )
                     }
                 },
@@ -284,47 +282,24 @@ fun SignupScreen(
                 ),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color(0xFF00CED1),
-                    unfocusedBorderColor = Color(0xFFB0BEC5),
-                    focusedLabelColor = Color(0xFF00CED1),
-                    cursorColor = Color(0xFF00CED1)
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             )
 
-            // Error Message
-            if (uiState.errorMessage != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = uiState.errorMessage!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Sign Up Button
-            Button(
+            // Sign Up Button using the reusable StyledButton
+            StyledButton(
+                text = "Sign Up",
                 onClick = {
+                    focusManager.clearFocus()
                     viewModel.signup()
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF008B8B),
-                    contentColor = Color.White
-                )
-            ) {
-                Text(
-                    text = "Sign Up",
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    letterSpacing = 1.sp
-                )
-            }
+                enabled = uiState.fullName.isNotBlank() && uiState.email.isNotBlank() && uiState.password.isNotBlank()
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -336,17 +311,25 @@ fun SignupScreen(
                 Text(
                     text = "Already have an account?",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color(0xFF008B8B).copy(alpha = 0.7f)
+                    color = Color.Gray
                 )
                 TextButton(onClick = onBackToLoginClick) {
                     Text(
                         text = "Login",
-                        color = Color(0xFF00CED1),
+                        color = TealPrimary,
                         fontWeight = FontWeight.Bold
                     )
                 }
             }
         }
+    }
+
+    // Show Error Dialog if signup fails
+    if (uiState.errorMessage != null) {
+        ErrorDialog(
+            message = uiState.errorMessage!!,
+            onDismiss = { viewModel.clearError() }
+        )
     }
 }
 
@@ -378,13 +361,5 @@ private fun SignupHeader() {
             color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
             textAlign = TextAlign.Center
         )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun SignupScreenPreview() {
-    MaterialTheme {
-        SignupScreen()
     }
 }
