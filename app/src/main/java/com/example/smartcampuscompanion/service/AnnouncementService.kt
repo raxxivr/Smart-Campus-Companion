@@ -3,6 +3,7 @@ package com.example.smartcampuscompanion.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -11,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.smartcampuscompanion.MainActivity
 import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.data.Announcement
 import com.google.firebase.firestore.FirebaseFirestore
@@ -69,11 +71,25 @@ class AnnouncementService : Service() {
 
     private fun showNewAnnouncementNotification(announcement: Announcement) {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("OPEN_ANNOUNCEMENTS", true)
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            this, 
+            announcement.id, 
+            intent, 
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("New Announcement: ${announcement.title}")
             .setContentText(announcement.description)
             .setSmallIcon(R.drawable.logo)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .build()
 
