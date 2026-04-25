@@ -35,6 +35,7 @@ import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
+import com.example.smartcampuscompanion.worker.WorkManagerHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -55,6 +56,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
@@ -73,6 +79,8 @@ class MainActivity : ComponentActivity() {
         } else {
             startAnnouncementService()
         }
+
+        WorkManagerHelper.scheduleAnnouncementTasks(this)
 
         setContent {
             val context = LocalContext.current
@@ -119,6 +127,32 @@ class MainActivity : ComponentActivity() {
             val isLoggedIn by loginViewModel.isLoggedIn
             var showSplash by remember { mutableStateOf(true) }
             val darkMode by settingsViewModel.darkModeEnabled.collectAsStateWithLifecycle()
+
+            LaunchedEffect(isLoggedIn, showSplash) {
+                if (!showSplash) {
+                    if (isLoggedIn) {
+                        loginViewModel.userEmail?.let { email ->
+                            taskViewModel.loadTasksForUser(email)
+                            announcementViewModel.loadReadStatus(email)
+                        }
+                        
+                        // Decide where to go: Dashboard or Announcements from notification
+                        val targetRoute = if (intent.getBooleanExtra("OPEN_ANNOUNCEMENTS", false)) {
+                            "announcements"
+                        } else {
+                            "dashboard"
+                        }
+
+                        navController.navigate(targetRoute) {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            }
 
             LaunchedEffect(Unit) {
                 sessionManager.getEmail()?.let { email ->
