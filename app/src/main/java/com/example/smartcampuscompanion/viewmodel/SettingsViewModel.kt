@@ -1,23 +1,50 @@
 package com.example.smartcampuscompanion.viewmodel
 
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
-class SettingsViewModel : ViewModel() {
+class SettingsViewModel(private val repository: UserPreferencesRepository) : ViewModel() {
 
-    private val _notificationsEnabled = mutableStateOf(true)
-    val notificationsEnabled: State<Boolean> = _notificationsEnabled
+    val notificationsEnabled: StateFlow<Boolean> = repository.notificationsFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
 
-    private val _darkModeEnabled = mutableStateOf(false)
-    val darkModeEnabled: State<Boolean> = _darkModeEnabled
+    val darkModeEnabled: StateFlow<Boolean> = repository.darkModeFlow
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
 
     fun toggleNotifications(enabled: Boolean) {
-        _notificationsEnabled.value = enabled
+        viewModelScope.launch {
+            repository.updateNotifications(enabled)
+        }
     }
 
     fun toggleDarkMode(enabled: Boolean) {
-        _darkModeEnabled.value = enabled
+        viewModelScope.launch {
+            repository.updateDarkMode(enabled)
+        }
     }
 }
 
+class SettingsViewModelFactory(private val repository: UserPreferencesRepository) :
+    ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SettingsViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
