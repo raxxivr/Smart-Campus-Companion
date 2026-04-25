@@ -106,6 +106,10 @@ class SignupViewModel(private val userRepository: UserRepository) : ViewModel() 
         _uiState.value = SignupUiState()
     }
 
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
+    }
+
     fun resetSignupSuccess() {
         _uiState.update { it.copy(isSignupSuccessful = false) }
     }

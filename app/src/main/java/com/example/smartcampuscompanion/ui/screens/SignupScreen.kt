@@ -27,12 +27,14 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.ui.components.ErrorDialog
+import com.example.smartcampuscompanion.ui.components.StyledButton
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.ui.theme.TealSecondary
 import com.example.smartcampuscompanion.viewmodel.SignupViewModel
 
 @Composable
@@ -63,28 +65,72 @@ fun SignupScreen(
                 .padding(horizontal = 24.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Header
-            Surface(
-                modifier = Modifier
-                    .size(80.dp)
-                    .shadow(15.dp, RoundedCornerShape(24.dp)),
-                shape = RoundedCornerShape(24.dp),
-                color = Color.White
-            ) {
-                Image(
-                    painter = painterResource(id = R.drawable.logo),
-                    contentDescription = "Logo",
-                    modifier = Modifier.padding(12.dp)
+            SignupHeader()
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Full Name Field
+            OutlinedTextField(
+                value = uiState.fullName,
+                onValueChange = viewModel::onFullNameChange,
+                label = { Text("Full Name") },
+                placeholder = { Text("Juan Dela Cruz") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Name Icon",
+                        tint = TealPrimary
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
                 )
             }
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Join Smart Campus",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = Color.White
+            // Email Field
+            OutlinedTextField(
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChange,
+                label = { Text("Email Address") },
+                placeholder = { Text("student@university.edu") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Email,
+                        contentDescription = "Email Icon",
+                        tint = TealPrimary
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
+                )
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -108,13 +154,36 @@ fun SignupScreen(
                         color = Color(0xFF2D3142)
                     )
 
-                    SignupTextField(
-                        value = uiState.fullName,
-                        onValueChange = viewModel::onFullNameChange,
-                        label = "Full Name",
-                        icon = Icons.Default.Person,
-                        focusManager = focusManager
+            // Student Number Field
+            OutlinedTextField(
+                value = uiState.studentNumber,
+                onValueChange = viewModel::onStudentNumberChange,
+                label = { Text("Student Number") },
+                placeholder = { Text("2021-12345") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Badge,
+                        contentDescription = "Student Number Icon",
+                        tint = TealPrimary
                     )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
+                )
+            )
 
                     SignupTextField(
                         value = uiState.email,
@@ -125,14 +194,36 @@ fun SignupScreen(
                         keyboardType = KeyboardType.Email
                     )
 
-                    SignupTextField(
-                        value = uiState.studentNumber,
-                        onValueChange = viewModel::onStudentNumberChange,
-                        label = "Student Number",
-                        icon = Icons.Default.Badge,
-                        focusManager = focusManager,
-                        keyboardType = KeyboardType.Number
+            // Course Field
+            OutlinedTextField(
+                value = uiState.course,
+                onValueChange = viewModel::onCourseChange,
+                label = { Text("Course") },
+                placeholder = { Text("BS Computer Science") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.School,
+                        contentDescription = "Course Icon",
+                        tint = TealPrimary
                     )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
+                )
+            )
 
                     SignupTextField(
                         value = uiState.course,
@@ -142,64 +233,136 @@ fun SignupScreen(
                         focusManager = focusManager
                     )
 
-                    SignupPasswordField(
-                        value = uiState.password,
-                        onValueChange = viewModel::onPasswordChange,
-                        label = "Password",
-                        visible = uiState.passwordVisible,
-                        onToggle = viewModel::onTogglePasswordVisibility,
-                        focusManager = focusManager
+            // Password Field
+            OutlinedTextField(
+                value = uiState.password,
+                onValueChange = viewModel::onPasswordChange,
+                label = { Text("Password") },
+                placeholder = { Text("Minimum 6 characters") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Password Icon",
+                        tint = TealPrimary
                     )
-
-                    if (uiState.errorMessage != null) {
-                        Text(
-                            text = uiState.errorMessage!!,
-                            color = Color.Red,
-                            style = MaterialTheme.typography.labelSmall,
-                            modifier = Modifier.fillMaxWidth()
+                },
+                trailingIcon = {
+                    IconButton(onClick = viewModel::onTogglePasswordVisibility) {
+                        Icon(
+                            imageVector = if (uiState.passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (uiState.passwordVisible) "Hide Password" else "Show Password",
+                            tint = TealPrimary
                         )
                     }
+                },
+                visualTransformation = if (uiState.passwordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Down) }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
+                )
+            )
 
-                    Button(
-                        onClick = { viewModel.signup() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = TealPrimary)
-                    ) {
-                        Text("SIGN UP", fontWeight = FontWeight.ExtraBold, letterSpacing = 1.sp)
-                    }
+            Spacer(modifier = Modifier.height(16.dp))
 
-                    // Google Signup
-                    OutlinedButton(
-                        onClick = onGoogleSignupClick,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f))
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_google_logo),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Sign up with Google", color = Color(0xFF2D3142))
-                        }
+            // Confirm Password Field
+            OutlinedTextField(
+                value = uiState.confirmPassword,
+                onValueChange = viewModel::onConfirmPasswordChange,
+                label = { Text("Confirm Password") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Confirm Password Icon",
+                        tint = TealPrimary
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = viewModel::onToggleConfirmPasswordVisibility) {
+                        Icon(
+                            imageVector = if (uiState.confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = if (uiState.confirmPasswordVisible) "Hide Password" else "Show Password",
+                            tint = TealPrimary
+                        )
                     }
-                }
-            }
+                },
+                visualTransformation = if (uiState.confirmPasswordVisible)
+                    VisualTransformation.None
+                else
+                    PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = { focusManager.clearFocus() }
+                ),
+                shape = RoundedCornerShape(12.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = TealPrimary,
+                    unfocusedBorderColor = Color.LightGray,
+                    focusedLabelColor = TealPrimary,
+                    cursorColor = TealPrimary
+                )
+            )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Already a member? ", color = Color.White.copy(alpha = 0.8f))
+            // Sign Up Button using the reusable StyledButton
+            StyledButton(
+                text = "Sign Up",
+                onClick = {
+                    focusManager.clearFocus()
+                    viewModel.signup()
+                },
+                enabled = uiState.fullName.isNotBlank() && uiState.email.isNotBlank() && uiState.password.isNotBlank()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Back to Login
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Already have an account?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
                 TextButton(onClick = onBackToLoginClick) {
-                    Text("Login Here", color = Color.White, fontWeight = FontWeight.ExtraBold)
+                    Text(
+                        text = "Login",
+                        color = TealPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         }
+    }
+
+    // Show Error Dialog if signup fails
+    if (uiState.errorMessage != null) {
+        ErrorDialog(
+            message = uiState.errorMessage!!,
+            onDismiss = { viewModel.clearError() }
+        )
     }
 }
 
@@ -226,41 +389,5 @@ fun SignupTextField(
         ),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
-    )
-}
-
-@Composable
-fun SignupPasswordField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    visible: Boolean,
-    onToggle: () -> Unit,
-    focusManager: androidx.compose.ui.platform.FocusManager
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = { Text(label, fontSize = 14.sp) },
-        leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp)) },
-        trailingIcon = {
-            IconButton(onClick = onToggle) {
-                Icon(
-                    imageVector = if (visible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    contentDescription = null,
-                    tint = Color.Gray
-                )
-            }
-        },
-        visualTransformation = if (visible) VisualTransformation.None else PasswordVisualTransformation(),
-        modifier = Modifier.fillMaxWidth(),
-        singleLine = true,
-        shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = TealPrimary,
-            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.4f)
-        ),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
     )
 }

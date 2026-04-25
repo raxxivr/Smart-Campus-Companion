@@ -19,11 +19,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
+import com.example.smartcampuscompanion.ui.components.EmptyStateComponent
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
@@ -58,10 +58,15 @@ fun TaskManagerScreen(
             Column {
                 TopAppBar(
                     title = { 
-                        Text(
-                            "Task Manager", 
-                            fontWeight = FontWeight.Bold
-                        ) 
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            IconButton(onClick = onBackClick) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
+                            }
+                            Text(
+                                "Task Manager", 
+                                fontWeight = FontWeight.Bold
+                            ) 
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
@@ -165,7 +170,12 @@ fun TaskManagerScreen(
                 
                 if (filteredTasks.isEmpty()) {
                     item {
-                        EmptyCategoryState(selectedCategory)
+                        EmptyStateComponent(
+                            message = if (selectedCategory == "All") "No tasks found" else "No tasks in '$selectedCategory'",
+                            description = "Tap the + button to add one",
+                            icon = Icons.Default.EventNote,
+                            modifier = Modifier.padding(top = 40.dp)
+                        )
                     }
                 } else {
                     items(filteredTasks, key = { it.id }) { task ->
@@ -233,37 +243,6 @@ fun CategoryTab(title: String, isSelected: Boolean, onClick: () -> Unit) {
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 fontSize = 14.sp
             )
-        )
-    }
-}
-
-@Composable
-fun EmptyCategoryState(category: String) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 64.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Icon(
-            imageVector = Icons.Default.EventNote,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.outlineVariant
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = if (category == "All") "No tasks found" else "No tasks in '$category'",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-        Text(
-            text = "Tap the + button to add one",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
         )
     }
 }

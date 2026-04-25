@@ -18,8 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -27,7 +25,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
-import com.example.smartcampuscompanion.data.Task
+import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
@@ -74,33 +72,25 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            Column {
-                TopAppBar(
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Image(
-                                painter = painterResource(id = R.drawable.logo),
-                                contentDescription = "App Logo",
-                                modifier = Modifier.size(32.dp).clip(CircleShape)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                "Smart Campus Companion",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = TealPrimary
-                            )
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = TealPrimary,
-                        navigationIconContentColor = TealPrimary
-                    ),
-                    windowInsets = WindowInsets.statusBars
-                )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-            }
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.logo),
+                            contentDescription = "App Logo",
+                            modifier = Modifier.size(32.dp).clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Smart Campus",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = TealPrimary
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
+            )
         },
         bottomBar = {
             BottomNavBar(
@@ -116,8 +106,9 @@ fun DashboardScreen(
         DashboardContent(
             username = username,
             taskViewModel = taskViewModel,
-            onAnnouncementsClick = onAnnouncementsClick,
+            announcementViewModel = announcementViewModel,
             onCalendarClick = onCalendarClick,
+            onAnnouncementsClick = onAnnouncementsClick,
             modifier = Modifier.padding(innerPadding)
         )
     }
@@ -127,11 +118,13 @@ fun DashboardScreen(
 fun DashboardContent(
     username: String?,
     taskViewModel: TaskViewModel,
-    onAnnouncementsClick: () -> Unit,
+    announcementViewModel: AnnouncementViewModel,
     onCalendarClick: () -> Unit,
+    onAnnouncementsClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
+    val announcements by announcementViewModel.allAnnouncements.collectAsState()
     
     // Calculating current date on every composition ensures it's always "live" 
     // when the screen is accessed or refreshed.
@@ -144,24 +137,31 @@ fun DashboardContent(
     val tomorrowTasks = tasks.filter { isSameDay(it.dueDate, tomorrow.timeInMillis) && !it.isCompleted }
 
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize().background(Color(0xFFFBFBFF)),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            Column {
+            Column(modifier = Modifier.padding(top = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Hello, ",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "${fullName?.split(" ")?.firstOrNull() ?: "Student"}!",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TealPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Hello, ${fullName ?: "student"}!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-                Text(
-                    text = "ID: ${studentNumber ?: "2024-XXXX"} • ${course ?: "Regular Student"}",
+                    text = if (fullName == "Admin") "Administrator Access" else "ID: ${studentNumber ?: "---"} • ${course ?: "BSIT - 3rd Year"}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
@@ -178,115 +178,21 @@ fun DashboardContent(
 
         item {
             Column {
-                SectionHeader(title = "Featured Events")
+                SectionHeader(title = "Recent Announcements", onViewAllClick = onAnnouncementsClick)
                 Spacer(modifier = Modifier.height(12.dp))
-                
-                if (departments.isEmpty()) {
-                    Text("No campus info available.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
+                if (announcements.isEmpty()) {
+                    Text("No recent announcements", color = Color.Gray, style = MaterialTheme.typography.bodyMedium)
                 } else {
-                    departments.take(3).forEach { department ->
-                        CampusInfoPreviewItem(department = department, onClick = onCampusInfoClick)
-                    }
-                }
-            }
-        }
-
-        item {
-            Column {
-                SectionHeader(
-                    title = "Recent Announcements",
-                    onViewAllClick = onAnnouncementsClick
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
-
-                if (unreadAnnouncements.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = MaterialTheme.colorScheme.outlineVariant
+                    announcements.take(3).forEach { announcement ->
+                        AnnouncementItem(
+                            title = announcement.title,
+                            desc = announcement.description,
+                            time = announcement.date,
+                            onClick = onAnnouncementsClick
                         )
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "No new announcements available",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                } else {
-                    unreadAnnouncements.take(3).forEach { announcement ->
-                        AnnouncementItem(
-                            announcement = announcement, 
-                            isRead = false,
-                            onMarkAsRead = { /* Dashboard items are not clickable for marking read as per requirement */ }
-                        )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
-    val isOpen = department.isOpen()
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface),
-                contentAlignment = Alignment.Center
-            ) {
-                Image(
-                    painter = painterResource(id = department.iconRes),
-                    contentDescription = null,
-                    modifier = Modifier.size(32.dp),
-                    contentScale = ContentScale.Fit
-                )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = department.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = department.location,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                AnnouncementItem(
-                    title = "New Canteen Menu",
-                    desc = "Check out the healthy options available starting tomorrow at the student center.",
-                    time = "5h ago"
-                )
             }
         }
     }
@@ -298,72 +204,48 @@ fun CalendarWidget(
     dayName: String,
     tasksToShow: List<Task>,
     isTomorrow: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
+    onClick: () -> Unit
 ) {
+    val gradient = Brush.horizontalGradient(
+        colors = listOf(TealPrimary, Color(0xFF00BFA5))
+    )
+
     Card(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxWidth()
-            .height(110.dp)
+            .height(120.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
-        Row(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .background(gradient)
+                .padding(16.dp)
         ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(end = 24.dp)
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = dayName.take(3).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = if (isTomorrow) "Upcoming for Tomorrow" else "Your Schedule for Today",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color.LightGray.copy(alpha = 0.5f))
-            )
-
-            Column(
-                modifier = Modifier
-                    .padding(start = 24.dp)
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (isTomorrow) {
+                // Date Section
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
                     Text(
-                        text = "You're all caught up! No tasks due.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.Bold
+                        dayName.take(3).uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp
                     )
-                }
-                
-                if (tasksToShow.isEmpty()) {
                     Text(
-                        text = "${tasksToShow.size} tasks: ${tasksToShow.first().title}${if (tasksToShow.size > 1) "..." else ""}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        dayNumber,
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        color = Color.White
                     )
                 } else {
                     tasksToShow.take(2).forEachIndexed { index, task ->
@@ -377,90 +259,171 @@ fun CalendarWidget(
                         }
                     }
                 }
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                // Tasks Section
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        if (isTomorrow) "TOMORROW'S TASK" else "TODAY'S SCHEDULE",
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    if (tasksToShow.isEmpty()) {
+                        Text(
+                            "All caught up!",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "No pending tasks",
+                            color = Color.White.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        val task = tasksToShow.first()
+                        Text(
+                            task.title,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
+                                color = Color.White.copy(alpha = 0.8f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color.White.copy(alpha = 0.3f), CircleShape)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    task.category,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.outlineVariant
-            )
         }
     }
 }
 
 @Composable
-fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Text(
-            text = "View All",
-            style = MaterialTheme.typography.labelLarge,
-            color = TealPrimary,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { onViewAllClick() }
-        )
+fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+        TextButton(onClick = onViewAllClick) { Text("View All", color = TealPrimary) }
     }
 }
 
 @Composable
-fun EventCard(title: String, imageRes: Int) {
+fun AnnouncementItem(title: String, desc: String, time: String, onClick: () -> Unit) {
     Card(
-        modifier = Modifier.width(240.dp).height(140.dp),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(12.dp))
                     .background(TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Notifications, contentDescription = null, tint = TealPrimary)
+                Icon(
+                    Icons.Default.Notifications,
+                    contentDescription = null,
+                    tint = TealPrimary,
+                    modifier = Modifier.size(24.dp)
+                )
             }
+            
             Spacer(modifier = Modifier.width(16.dp))
+            
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        color = Color.Black,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
-                    Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(
+                        text = time,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.Gray,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
-                    text = announcement.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = announcement.description,
+                    text = desc,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = Color.DarkGray.copy(alpha = 0.8f),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp
                 )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Read more",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TealPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        Icons.Default.ArrowRight,
+                        contentDescription = null,
+                        tint = TealPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }
@@ -469,6 +432,5 @@ fun EventCard(title: String, imageRes: Int) {
 private fun isSameDay(time1: Long, time2: Long): Boolean {
     val cal1 = Calendar.getInstance().apply { timeInMillis = time1 }
     val cal2 = Calendar.getInstance().apply { timeInMillis = time2 }
-    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-           cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
+    return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) && cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR)
 }
