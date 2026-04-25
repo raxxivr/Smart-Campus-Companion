@@ -67,6 +67,10 @@ dependencies {
     implementation(libs.firebase.analytics)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging)
+
+    // WorkManager
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")

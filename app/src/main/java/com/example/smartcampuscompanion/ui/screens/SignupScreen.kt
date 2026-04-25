@@ -1,6 +1,9 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,14 +12,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
@@ -29,7 +31,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.ui.components.ErrorDialog
 import com.example.smartcampuscompanion.ui.components.StyledButton
@@ -38,30 +39,30 @@ import com.example.smartcampuscompanion.viewmodel.SignupViewModel
 
 @Composable
 fun SignupScreen(
-    onSignupClick: (String, String, String, String, String) -> Unit = { _, _, _, _, _ -> },
-    onBackToLoginClick: () -> Unit = {},
-    modifier: Modifier = Modifier,
-    viewModel: SignupViewModel = viewModel()
+    onSignupClick: (String, String, String, String, String) -> Unit,
+    onBackToLoginClick: () -> Unit,
+    viewModel: SignupViewModel,
+    onGoogleSignupClick: () -> Unit = {}, // Added this parameter to fix the error
+    modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(uiState.isSignupSuccessful) {
-        if (uiState.isSignupSuccessful) {
-            viewModel.resetSignupSuccess()
-        }
-    }
-
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(
+                brush = Brush.verticalGradient(
+                    colors = listOf(TealPrimary, TealSecondary, Color(0xFF006064))
+                )
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .padding(horizontal = 32.dp, vertical = 24.dp),
+                .padding(horizontal = 24.dp, vertical = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             SignupHeader()
@@ -97,9 +98,9 @@ fun SignupScreen(
                     focusedLabelColor = TealPrimary,
                     cursorColor = TealPrimary
                 )
-            )
+            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Email Field
             OutlinedTextField(
@@ -131,8 +132,27 @@ fun SignupScreen(
                     cursorColor = TealPrimary
                 )
             )
+            
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
+            // Glassmorphism Card
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(28.dp),
+                color = Color.White.copy(alpha = 0.95f),
+                shadowElevation = 8.dp
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Text(
+                        text = "Create Account",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF2D3142)
+                    )
 
             // Student Number Field
             OutlinedTextField(
@@ -165,7 +185,14 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    SignupTextField(
+                        value = uiState.email,
+                        onValueChange = viewModel::onEmailChange,
+                        label = "Email Address",
+                        icon = Icons.Default.Email,
+                        focusManager = focusManager,
+                        keyboardType = KeyboardType.Email
+                    )
 
             // Course Field
             OutlinedTextField(
@@ -198,7 +225,13 @@ fun SignupScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+                    SignupTextField(
+                        value = uiState.course,
+                        onValueChange = viewModel::onCourseChange,
+                        label = "Course",
+                        icon = Icons.Default.School,
+                        focusManager = focusManager
+                    )
 
             // Password Field
             OutlinedTextField(
@@ -334,32 +367,27 @@ fun SignupScreen(
 }
 
 @Composable
-private fun SignupHeader() {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "Smart Campus Logo",
-            modifier = Modifier
-                .size(100.dp)
-                .clip(RoundedCornerShape(20.dp))
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Text(
-            text = "Create Account",
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Fill in your details to register",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-            textAlign = TextAlign.Center
-        )
-    }
+fun SignupTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    focusManager: androidx.compose.ui.platform.FocusManager,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = { Text(label, fontSize = 14.sp) },
+        leadingIcon = { Icon(icon, contentDescription = null, tint = TealPrimary, modifier = Modifier.size(20.dp)) },
+        modifier = Modifier.fillMaxWidth(),
+        singleLine = true,
+        shape = RoundedCornerShape(16.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = TealPrimary,
+            unfocusedBorderColor = Color.LightGray.copy(alpha = 0.4f)
+        ),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) })
+    )
 }

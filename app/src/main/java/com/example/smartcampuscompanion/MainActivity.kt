@@ -26,7 +26,6 @@ import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.viewmodel.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-
 import com.example.smartcampuscompanion.service.AnnouncementService
 import android.content.Intent
 import android.Manifest
@@ -34,6 +33,9 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
+import com.example.smartcampuscompanion.worker.WorkManagerHelper
 
 class MainActivity : ComponentActivity() {
 
@@ -52,6 +54,11 @@ class MainActivity : ComponentActivity() {
         } else {
             startService(intent)
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -73,6 +80,8 @@ class MainActivity : ComponentActivity() {
             startAnnouncementService()
         }
 
+        WorkManagerHelper.scheduleAnnouncementTasks(this)
+
         setContent {
             val context = LocalContext.current
             
@@ -83,7 +92,7 @@ class MainActivity : ComponentActivity() {
             // Local Database
             val taskDatabase = remember { TaskDatabase.getDatabase(context) }
             
-            // Repositories (New Cloud Sync Implementations)
+            // Repositories
             val sessionManager = remember { SessionManager(context) }
             val userRepository = remember { 
                 FirebaseUserRepository(auth, firestore, taskDatabase.userDao()) 
@@ -94,6 +103,7 @@ class MainActivity : ComponentActivity() {
             val announcementRepository = remember { 
                 SmartCampusAnnouncementRepository(firestore, taskDatabase.announcementDao()) 
             }
+            val userPrefsRepository = remember { UserPreferencesRepository(context) }
 
             // ViewModels
             val loginViewModel: LoginViewModel = viewModel(
@@ -106,7 +116,9 @@ class MainActivity : ComponentActivity() {
                 factory = AnnouncementViewModelFactory(announcementRepository)
             )
             val campusInfoViewModel: CampusInfoViewModel = viewModel()
-            val settingsViewModel: SettingsViewModel = viewModel()
+            val settingsViewModel: SettingsViewModel = viewModel(
+                factory = SettingsViewModelFactory(userPrefsRepository)
+            )
             val signupViewModel: SignupViewModel = viewModel(
                 factory = SignupViewModelFactory(userRepository)
             )
@@ -114,6 +126,33 @@ class MainActivity : ComponentActivity() {
             val navController = rememberNavController()
             val isLoggedIn by loginViewModel.isLoggedIn
             var showSplash by remember { mutableStateOf(true) }
+            val darkMode by settingsViewModel.darkModeEnabled.collectAsStateWithLifecycle()
+
+            LaunchedEffect(isLoggedIn, showSplash) {
+                if (!showSplash) {
+                    if (isLoggedIn) {
+                        loginViewModel.userEmail?.let { email ->
+                            taskViewModel.loadTasksForUser(email)
+                            announcementViewModel.loadReadStatus(email)
+                        }
+                        
+                        // Decide where to go: Dashboard or Announcements from notification
+                        val targetRoute = if (intent.getBooleanExtra("OPEN_ANNOUNCEMENTS", false)) {
+                            "announcements"
+                        } else {
+                            "dashboard"
+                        }
+
+                        navController.navigate(targetRoute) {
+                            popUpTo("login") { inclusive = true }
+                        }
+                    } else {
+                        navController.navigate("login") {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
+                }
+            }
 
             LaunchedEffect(Unit) {
                 sessionManager.getEmail()?.let { email ->
@@ -129,7 +168,9 @@ class MainActivity : ComponentActivity() {
                             taskViewModel.loadTasksForUser(email)
                             announcementViewModel.loadReadStatus(email)
                         }
-                        navController.navigate("dashboard") {
+                        
+                        val destination = if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                        navController.navigate(destination) {
                             popUpTo("login") { inclusive = true }
                         }
                     } else {
@@ -140,7 +181,7 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            SmartCampusCompanionTheme {
+            SmartCampusCompanionTheme(darkTheme = darkMode) {
                 if (showSplash) {
                     SplashScreen(onTimeout = { showSplash = false })
                 } else {
@@ -148,7 +189,9 @@ class MainActivity : ComponentActivity() {
                         Box(modifier = Modifier.fillMaxSize()) {
                             NavHost(
                                 navController = navController,
-                                startDestination = if (sessionManager.isLoggedIn()) "dashboard" else "login",
+                                startDestination = if (sessionManager.isLoggedIn()) {
+                                    if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                                } else "login",
                                 modifier = Modifier.padding(innerPadding)
                             ) {
                                 composable("login") {
@@ -160,6 +203,9 @@ class MainActivity : ComponentActivity() {
                                         onSignUpClick = {
                                             signupViewModel.clearForm()
                                             navController.navigate("signup")
+                                        },
+                                        onGoogleSignInClick = {
+                                            Toast.makeText(context, "Google Sign-In coming soon!", Toast.LENGTH_SHORT).show()
                                         }
                                     )
                                 }
@@ -172,42 +218,53 @@ class MainActivity : ComponentActivity() {
                                         onBackToLoginClick = {
                                             navController.popBackStack()
                                         },
-                                        viewModel = signupViewModel
-                                    )
-                                    
-                                    val uiState by signupViewModel.uiState.collectAsState()
-                                    if (uiState.isSignupSuccessful) {
-                                        LaunchedEffect(Unit) {
-                                            Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                                            signupViewModel.resetSignupSuccess()
-                                            navController.popBackStack()
+                                        viewModel = signupViewModel,
+                                        onGoogleSignupClick = {
+                                             Toast.makeText(context, "Google Sign-Up coming soon!", Toast.LENGTH_SHORT).show()
                                         }
-                                    }
+                                    )
                                 }
 
                                 composable("dashboard") {
-                                    DashboardScreen(
-                                        fullName = loginViewModel.fullName,
-                                        studentNumber = loginViewModel.studentNumber,
-                                        course = loginViewModel.course,
-                                        taskViewModel = taskViewModel,
-                                        announcementViewModel = announcementViewModel,
-                                        campusViewModel = campusInfoViewModel,
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { navController.navigate("task_manager") },
-                                        onCampusInfoClick = { navController.navigate("campus_info") },
-                                        onSettingsClick = { navController.navigate("settings") },
-                                        onCalendarClick = { navController.navigate("calendar_module") }
-                                    )
+                                    // SECURITY GUARD: Check if user is Admin and redirect if necessary
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        DashboardScreen(
+                                            username = loginViewModel.fullName,
+                                            taskViewModel = taskViewModel,
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { navController.navigate("task_manager") },
+                                            onCampusInfoClick = { navController.navigate("campus_info") },
+                                            onSettingsClick = { navController.navigate("settings") },
+                                            onCalendarClick = { navController.navigate("calendar_module") }
+                                        )
+                                    }
+                                }
+
+                                composable("admin_dashboard") {
+                                    // SECURITY GUARD: Check if user is NOT Admin and redirect if necessary
+                                    if (sessionManager.getRole() != "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("dashboard") }
+                                    } else {
+                                        AdminDashboardScreen(
+                                            loginViewModel = loginViewModel,
+                                            announcementViewModel = announcementViewModel,
+                                            onLogoutClick = { loginViewModel.logout() }
+                                        )
+                                    }
                                 }
 
                                 composable("announcements") {
-                                    val isAdmin = loginViewModel.userEmail == "admin@smartcampus.com"
+                                    val isAdmin = sessionManager.getRole() == "ADMIN"
                                     AnnouncementScreen(
                                         isAdmin = isAdmin,
                                         viewModel = announcementViewModel,
                                         onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
+                                        onHomeClick = { 
+                                            val dest = if (isAdmin) "admin_dashboard" else "dashboard"
+                                            navController.navigate(dest) 
+                                        },
                                         onTasksClick = { navController.navigate("task_manager") },
                                         onCampusClick = { navController.navigate("campus_info") },
                                         onSettingsClick = { navController.navigate("settings") }
@@ -215,26 +272,36 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable("campus_info") {
-                                    CampusInfoScreen(
-                                        onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { navController.navigate("task_manager") },
-                                        onSettingsClick = { navController.navigate("settings") },
-                                        viewModel = campusInfoViewModel
-                                    )
+                                    // SECURITY GUARD: Prevent Admin from accessing Student-only info
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        CampusInfoScreen(
+                                            onBackClick = { navController.popBackStack() },
+                                            onHomeClick = { navController.navigate("dashboard") },
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { navController.navigate("task_manager") },
+                                            onSettingsClick = { navController.navigate("settings") },
+                                            viewModel = campusInfoViewModel
+                                        )
+                                    }
                                 }
 
                                 composable("task_manager") {
-                                    TaskManagerScreen(
-                                        viewModel = taskViewModel,
-                                        onBackClick = { navController.popBackStack() },
-                                        onHomeClick = { navController.navigate("dashboard") },
-                                        onAnnouncementsClick = { navController.navigate("announcements") },
-                                        onTasksClick = { /* Already here */ },
-                                        onCampusClick = { navController.navigate("campus_info") },
-                                        onSettingsClick = { navController.navigate("settings") }
-                                    )
+                                    // SECURITY GUARD: Prevent Admin from accessing Student-only tasks
+                                    if (sessionManager.getRole() == "ADMIN") {
+                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
+                                    } else {
+                                        TaskManagerScreen(
+                                            viewModel = taskViewModel,
+                                            onBackClick = { navController.popBackStack() },
+                                            onHomeClick = { navController.navigate("dashboard") },
+                                            onAnnouncementsClick = { navController.navigate("announcements") },
+                                            onTasksClick = { /* Already here */ },
+                                            onCampusClick = { navController.navigate("campus_info") },
+                                            onSettingsClick = { navController.navigate("settings") }
+                                        )
+                                    }
                                 }
 
                                 composable("calendar_module") {
@@ -247,9 +314,14 @@ class MainActivity : ComponentActivity() {
                                 composable("settings") {
                                     SettingsScreen(
                                         username = loginViewModel.fullName ?: loginViewModel.userEmail ?: "student",
+                                        studentNumber = loginViewModel.studentNumber,
+                                        course = loginViewModel.course,
                                         onLogout = { loginViewModel.logout() },
                                         viewModel = settingsViewModel,
-                                        onHomeClick = { navController.navigate("dashboard") },
+                                        onHomeClick = { 
+                                            val dest = if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
+                                            navController.navigate(dest) 
+                                        },
                                         onAnnouncementsClick = { navController.navigate("announcements") },
                                         onTasksClick = { navController.navigate("task_manager") },
                                         onCampusClick = { navController.navigate("campus_info") }

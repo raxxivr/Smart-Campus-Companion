@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,14 +21,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
+import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
-import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModel
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -35,12 +36,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    fullName: String?,
-    studentNumber: String?,
-    course: String?,
+    username: String?,
     taskViewModel: TaskViewModel,
-    announcementViewModel: AnnouncementViewModel,
-    campusViewModel: CampusInfoViewModel,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
@@ -48,6 +45,31 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        // Logout logic would be handled via a callback if needed
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -82,9 +104,7 @@ fun DashboardScreen(
         }
     ) { innerPadding ->
         DashboardContent(
-            fullName = fullName,
-            studentNumber = studentNumber,
-            course = course,
+            username = username,
             taskViewModel = taskViewModel,
             announcementViewModel = announcementViewModel,
             onCalendarClick = onCalendarClick,
@@ -96,9 +116,7 @@ fun DashboardScreen(
 
 @Composable
 fun DashboardContent(
-    fullName: String?,
-    studentNumber: String?,
-    course: String?,
+    username: String?,
     taskViewModel: TaskViewModel,
     announcementViewModel: AnnouncementViewModel,
     onCalendarClick: () -> Unit,
@@ -108,6 +126,8 @@ fun DashboardContent(
     val tasks by taskViewModel.allTasks.collectAsState()
     val announcements by announcementViewModel.allAnnouncements.collectAsState()
     
+    // Calculating current date on every composition ensures it's always "live" 
+    // when the screen is accessed or refreshed.
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
     val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
@@ -227,6 +247,17 @@ fun CalendarWidget(
                         fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
+                } else {
+                    tasksToShow.take(2).forEachIndexed { index, task ->
+                        UpcomingItem(
+                            title = task.title,
+                            time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
+                            category = task.category
+                        )
+                        if (index == 0 && tasksToShow.size > 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(20.dp))
