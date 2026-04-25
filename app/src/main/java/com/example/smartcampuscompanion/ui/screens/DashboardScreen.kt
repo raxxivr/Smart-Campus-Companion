@@ -74,30 +74,33 @@ fun DashboardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Image(
-                            painter = painterResource(id = R.drawable.logo),
-                            contentDescription = "App Logo",
-                            modifier = Modifier.size(32.dp).clip(CircleShape)
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            "Smart Campus Companion",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = TealPrimary
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White,
-                    titleContentColor = TealPrimary,
-                    navigationIconContentColor = TealPrimary
-                ),
-                windowInsets = WindowInsets.statusBars
-            )
+            Column {
+                TopAppBar(
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo),
+                                contentDescription = "App Logo",
+                                modifier = Modifier.size(32.dp).clip(CircleShape)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                "Smart Campus Companion",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = TealPrimary
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = TealPrimary,
+                        navigationIconContentColor = TealPrimary
+                    ),
+                    windowInsets = WindowInsets.statusBars
+                )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+            }
         },
         bottomBar = {
             BottomNavBar(
@@ -143,28 +146,23 @@ fun DashboardContent(
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFFFBFBFF)),
+            .background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Column {
-                    Text(
-                        text = "Hello, ${username ?: "student"}!",
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "ID: 2300999 • BSIT - 3rd Year",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
-                    )
-                }
+            Column {
+                Text(
+                    text = "Hello, ${fullName ?: "student"}!",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Text(
+                    text = "ID: ${studentNumber ?: "2024-XXXX"} • ${course ?: "Regular Student"}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
@@ -182,17 +180,12 @@ fun DashboardContent(
             Column {
                 SectionHeader(title = "Featured Events")
                 Spacer(modifier = Modifier.height(12.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    val events = listOf(
-                        Pair("Art Exhibition", R.drawable.art_exhibit_image),
-                        Pair("Tech Summit", R.drawable.tech_summit_image),
-                        Pair("Career Fair", R.drawable.career_fair_image)
-                    )
-                    items(events) { event ->
-                        EventCard(title = event.first, imageRes = event.second)
+                
+                if (departments.isEmpty()) {
+                    Text("No campus info available.", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(16.dp))
+                } else {
+                    departments.take(3).forEach { department ->
+                        CampusInfoPreviewItem(department = department, onClick = onCampusInfoClick)
                     }
                 }
             }
@@ -205,10 +198,89 @@ fun DashboardContent(
                     onViewAllClick = onAnnouncementsClick
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                AnnouncementItem(
-                    title = "Library Hours Extension",
-                    desc = "The main library will be open until midnight during finals week.",
-                    time = "2h ago"
+                
+                val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
+
+                if (unreadAnnouncements.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Campaign,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = "No new announcements available",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    unreadAnnouncements.take(3).forEach { announcement ->
+                        AnnouncementItem(
+                            announcement = announcement, 
+                            isRead = false,
+                            onMarkAsRead = { /* Dashboard items are not clickable for marking read as per requirement */ }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
+    val isOpen = department.isOpen()
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = department.iconRes),
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = department.name,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = department.location,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 AnnouncementItem(
                     title = "New Canteen Menu",
@@ -235,7 +307,7 @@ fun CalendarWidget(
             .height(110.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
@@ -255,10 +327,10 @@ fun CalendarWidget(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = dayNumber,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
+                    text = if (isTomorrow) "Upcoming for Tomorrow" else "Your Schedule for Today",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium
                 )
             }
 
@@ -277,20 +349,21 @@ fun CalendarWidget(
             ) {
                 if (isTomorrow) {
                     Text(
-                        "Tomorrow's Reminder:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TealPrimary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        text = "You're all caught up! No tasks due.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold
                     )
                 }
                 
                 if (tasksToShow.isEmpty()) {
                     Text(
-                        "No tasks today",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
+                        text = "${tasksToShow.size} tasks: ${tasksToShow.first().title}${if (tasksToShow.size > 1) "..." else ""}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 } else {
                     tasksToShow.take(2).forEachIndexed { index, task ->
@@ -305,35 +378,10 @@ fun CalendarWidget(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun UpcomingItem(title: String, time: String, category: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(TealPrimary)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "$time • $category",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
+            Icon(
+                imageVector = Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.outlineVariant
             )
         }
     }
@@ -346,10 +394,19 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        TextButton(onClick = onViewAllClick) {
-            Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
-        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.ExtraBold,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "View All",
+            style = MaterialTheme.typography.labelLarge,
+            color = TealPrimary,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.clickable { onViewAllClick() }
+        )
     }
 }
 
@@ -358,52 +415,7 @@ fun EventCard(title: String, imageRes: Int) {
     Card(
         modifier = Modifier.width(240.dp).height(140.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            Image(
-                painter = painterResource(id = imageRes),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
-            )
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                        )
-                    )
-            )
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Bottom
-            ) {
-                Text(
-                    text = title,
-                    color = Color.White,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "Feb 28 • Main Ground",
-                    color = Color.White.copy(alpha = 0.8f),
-                    style = MaterialTheme.typography.labelSmall
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun AnnouncementItem(title: String, desc: String, time: String) {
-    Card(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -435,10 +447,19 @@ fun AnnouncementItem(title: String, desc: String, time: String) {
                     Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 }
                 Text(
-                    text = desc,
+                    text = announcement.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray,
-                    maxLines = 2
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }

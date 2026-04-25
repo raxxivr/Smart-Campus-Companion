@@ -71,11 +71,11 @@ fun CampusInfoScreen(
                             )
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.White,
+                            containerColor = MaterialTheme.colorScheme.surface,
                             titleContentColor = TealPrimary
                         )
                     )
-                    HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                 }
             },
             bottomBar = {
@@ -88,7 +88,7 @@ fun CampusInfoScreen(
                     onSettingsClick = onSettingsClick
                 )
             },
-            containerColor = Color.White
+            containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -98,7 +98,7 @@ fun CampusInfoScreen(
                     start = 16.dp,
                     end = 16.dp
                 ),
-                modifier = Modifier.fillMaxSize().background(Color.White),
+                modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
@@ -125,7 +125,7 @@ fun DepartmentDashboardCard(department: Department, onClick: () -> Unit) {
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.surface,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
@@ -254,7 +254,8 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
                     navigationIconContentColor = Color.White
                 )
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             modifier = Modifier
@@ -291,13 +292,13 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
                 }
             }
 
-            // Description
+            // About
             item {
                 DetailSection(title = "About", icon = Icons.Default.Info) {
                     Text(
                         text = department.description,
                         style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -310,7 +311,7 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(TealPrimary))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(text = program, style = MaterialTheme.typography.bodyMedium)
+                                Text(text = program, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
@@ -343,9 +344,9 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
 
                         if (department.additionalContacts.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text("More Contacts:", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("More Contacts:", fontWeight = FontWeight.Bold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
                             department.additionalContacts.forEach { contact ->
-                                Text(text = "• $contact", style = MaterialTheme.typography.bodySmall)
+                                Text(text = "• $contact", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -363,7 +364,7 @@ fun DepartmentDetailScreen(department: Department, onBackClick: () -> Unit) {
 fun DetailSection(title: String, icon: ImageVector, content: @Composable () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA)),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -381,10 +382,10 @@ fun DetailSection(title: String, icon: ImageVector, content: @Composable () -> U
 @Composable
 fun InfoRowDetail(icon: ImageVector, label: String, value: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = Color.Gray)
+        Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "$label: ", fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-        Text(text = value, fontSize = 14.sp, color = Color.DarkGray)
+        Text(text = "$label: ", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurface)
+        Text(text = value, fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

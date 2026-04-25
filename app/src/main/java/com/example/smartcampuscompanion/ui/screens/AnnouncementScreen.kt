@@ -45,11 +45,11 @@ fun AnnouncementScreen(
                 TopAppBar(
                     title = { Text("Announcements", fontWeight = FontWeight.Bold) },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
+                        containerColor = MaterialTheme.colorScheme.surface,
                         titleContentColor = TealPrimary
                     )
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
         },
         bottomBar = {
@@ -78,11 +78,11 @@ fun AnnouncementScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color(0xFFFBFBFF))
+                .background(MaterialTheme.colorScheme.background)
         ) {
             if (announcements.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("No announcements yet.", color = Color.Gray)
+                    Text("No announcements yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 LazyColumn(
@@ -125,7 +125,7 @@ fun AnnouncementItemCard(
     onDelete: () -> Unit
 ) {
     val effectiveIsRead = if (isAdmin) false else isRead
-    val backgroundColor = if (effectiveIsRead) Color(0xFFF5F5F5) else Color.White
+    val backgroundColor = if (effectiveIsRead) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f) else MaterialTheme.colorScheme.surface
     val contentAlpha = if (effectiveIsRead) 0.6f else 1f
 
     Card(
@@ -144,13 +144,13 @@ fun AnnouncementItemCard(
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-                    .background(if (effectiveIsRead) Color.LightGray.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f)),
+                    .background(if (effectiveIsRead) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f) else TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Campaign,
                     contentDescription = null,
-                    tint = if (effectiveIsRead) Color.Gray else TealPrimary,
+                    tint = if (effectiveIsRead) MaterialTheme.colorScheme.onSurfaceVariant else TealPrimary,
                     modifier = Modifier.size(24.dp)
                 )
             }
@@ -165,26 +165,26 @@ fun AnnouncementItemCard(
                         text = announcement.title,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
-                        color = if (effectiveIsRead) Color.Gray else Color.Black,
+                        color = if (effectiveIsRead) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
                         text = announcement.date,
                         style = MaterialTheme.typography.labelSmall,
-                        color = Color.Gray.copy(alpha = contentAlpha)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
                     )
                 }
                 Text(
                     text = announcement.description,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.DarkGray.copy(alpha = contentAlpha),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = contentAlpha),
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
             if (isAdmin) {
                 IconButton(onClick = onDelete) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.4f))
+                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f))
                 }
             }
         }
