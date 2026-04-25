@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -14,23 +16,21 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
-import com.example.smartcampuscompanion.domain.model.Announcement
-import com.example.smartcampuscompanion.data.Department
-import com.example.smartcampuscompanion.domain.model.Task
+import com.example.smartcampuscompanion.data.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
+import com.example.smartcampuscompanion.ui.theme.SmartCampusCompanionTheme
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
-import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
-import com.example.smartcampuscompanion.viewmodel.CampusInfoViewModel
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -38,12 +38,8 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    fullName: String?,
-    studentNumber: String?,
-    course: String?,
+    username: String?,
     taskViewModel: TaskViewModel,
-    announcementViewModel: AnnouncementViewModel,
-    campusViewModel: CampusInfoViewModel,
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
@@ -51,6 +47,31 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showLogoutDialog by remember { mutableStateOf(false) }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            title = { Text("Logout") },
+            text = { Text("Are you sure you want to sign out?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showLogoutDialog = false
+                        // Logout logic would be handled via a callback if needed
+                    }
+                ) {
+                    Text("Logout", color = Color.Red)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             Column {
@@ -93,14 +114,9 @@ fun DashboardScreen(
         }
     ) { innerPadding ->
         DashboardContent(
-            fullName = fullName,
-            studentNumber = studentNumber,
-            course = course,
+            username = username,
             taskViewModel = taskViewModel,
-            announcementViewModel = announcementViewModel,
-            campusViewModel = campusViewModel,
             onAnnouncementsClick = onAnnouncementsClick,
-            onCampusInfoClick = onCampusInfoClick,
             onCalendarClick = onCalendarClick,
             modifier = Modifier.padding(innerPadding)
         )
@@ -109,22 +125,16 @@ fun DashboardScreen(
 
 @Composable
 fun DashboardContent(
-    fullName: String?,
-    studentNumber: String?,
-    course: String?,
+    username: String?,
     taskViewModel: TaskViewModel,
-    announcementViewModel: AnnouncementViewModel,
-    campusViewModel: CampusInfoViewModel,
     onAnnouncementsClick: () -> Unit,
-    onCampusInfoClick: () -> Unit,
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
-    val announcements by announcementViewModel.allAnnouncements.collectAsState()
-    val departments by campusViewModel.departments.collectAsState()
-    val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
     
+    // Calculating current date on every composition ensures it's always "live" 
+    // when the screen is accessed or refreshed.
     val calendar = Calendar.getInstance()
     val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
     val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
@@ -140,7 +150,6 @@ fun DashboardContent(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Header Section
         item {
             Column {
                 Text(
@@ -157,7 +166,6 @@ fun DashboardContent(
             }
         }
 
-        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -168,13 +176,9 @@ fun DashboardContent(
             )
         }
 
-        // Campus Info Preview Section
         item {
             Column {
-                SectionHeader(
-                    title = "Campus Info Overview",
-                    onViewAllClick = onCampusInfoClick
-                )
+                SectionHeader(title = "Featured Events")
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 if (departments.isEmpty()) {
@@ -187,7 +191,6 @@ fun DashboardContent(
             }
         }
 
-        // Recent Announcements Section
         item {
             Column {
                 SectionHeader(
@@ -279,17 +282,10 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-            Surface(
-                color = if (isOpen) Color(0xFF4CAF50).copy(alpha = 0.1f) else Color(0xFFF44336).copy(alpha = 0.1f),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                Text(
-                    text = if (isOpen) "OPEN" else "CLOSED",
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isOpen) Color(0xFF4CAF50) else Color(0xFFF44336),
-                    fontWeight = FontWeight.Bold
+                AnnouncementItem(
+                    title = "New Canteen Menu",
+                    desc = "Check out the healthy options available starting tomorrow at the student center.",
+                    time = "5h ago"
                 )
             }
         }
@@ -322,42 +318,45 @@ fun CalendarWidget(
         ) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .width(60.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(TealPrimary.copy(alpha = 0.1f))
-                    .padding(vertical = 8.dp)
+                modifier = Modifier.padding(end = 24.dp)
             ) {
                 Text(
-                    text = dayNumber,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = TealPrimary
-                )
-                Text(
                     text = dayName.take(3).uppercase(),
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = TealPrimary
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Red,
+                    fontWeight = FontWeight.Bold
                 )
-            }
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = if (isTomorrow) "Upcoming for Tomorrow" else "Your Schedule for Today",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Medium
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                if (tasksToShow.isEmpty()) {
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(1.dp)
+                    .background(Color.LightGray.copy(alpha = 0.5f))
+            )
+
+            Column(
+                modifier = Modifier
+                    .padding(start = 24.dp)
+                    .weight(1f),
+                verticalArrangement = Arrangement.Center
+            ) {
+                if (isTomorrow) {
                     Text(
                         text = "You're all caught up! No tasks due.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface,
                         fontWeight = FontWeight.Bold
                     )
-                } else {
+                }
+                
+                if (tasksToShow.isEmpty()) {
                     Text(
                         text = "${tasksToShow.size} tasks: ${tasksToShow.first().title}${if (tasksToShow.size > 1) "..." else ""}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -366,6 +365,17 @@ fun CalendarWidget(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
+                } else {
+                    tasksToShow.take(2).forEachIndexed { index, task ->
+                        UpcomingItem(
+                            title = task.title,
+                            time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
+                            category = task.category
+                        )
+                        if (index == 0 && tasksToShow.size > 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
                 }
             }
             Icon(
@@ -378,7 +388,7 @@ fun CalendarWidget(
 }
 
 @Composable
-fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
+fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -401,11 +411,9 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
 }
 
 @Composable
-fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: () -> Unit) {
+fun EventCard(title: String, imageRes: Int) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
+        modifier = Modifier.width(240.dp).height(140.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
@@ -416,15 +424,28 @@ fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: 
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Campaign, contentDescription = null, tint = TealPrimary)
+                Icon(Icons.Default.Notifications, contentDescription = null, tint = TealPrimary)
             }
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(text = time, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                }
                 Text(
                     text = announcement.title,
                     style = MaterialTheme.typography.titleSmall,

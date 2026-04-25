@@ -10,5 +10,6 @@ data class User(
     val fullName: String,
     val studentNumber: String,
     val course: String,
-    val password: String
+    val password: String,
+    val role: String = "STUDENT" // Added role field: "STUDENT" or "ADMIN"
 )

@@ -13,27 +13,27 @@ class SessionManager(context: Context) {
         private const val KEY_FULL_NAME = "full_name"
         private const val KEY_STUDENT_NUMBER = "student_number"
         private const val KEY_COURSE = "course"
+        private const val KEY_ROLE = "role" // Added role key
     }
 
-    fun createLoginSession(fullName: String, email: String, studentNumber: String, course: String) {
+    fun createLoginSession(fullName: String, email: String, studentNumber: String, course: String, role: String = "STUDENT") {
         prefs.edit().apply {
             putBoolean(KEY_IS_LOGGED_IN, true)
             putString(KEY_FULL_NAME, fullName)
             putString(KEY_EMAIL, email)
             putString(KEY_STUDENT_NUMBER, studentNumber)
             putString(KEY_COURSE, course)
+            putString(KEY_ROLE, role)
             apply()
         }
     }
 
-    fun isLoggedIn(): Boolean {
-        return prefs.getBoolean(KEY_IS_LOGGED_IN, false)
-    }
-
+    fun isLoggedIn(): Boolean = prefs.getBoolean(KEY_IS_LOGGED_IN, false)
     fun getEmail(): String? = prefs.getString(KEY_EMAIL, null)
     fun getFullName(): String? = prefs.getString(KEY_FULL_NAME, null)
     fun getStudentNumber(): String? = prefs.getString(KEY_STUDENT_NUMBER, null)
     fun getCourse(): String? = prefs.getString(KEY_COURSE, null)
+    fun getRole(): String? = prefs.getString(KEY_ROLE, "STUDENT") // Get role, default to STUDENT
 
     fun logout() {
         prefs.edit().clear().apply()
