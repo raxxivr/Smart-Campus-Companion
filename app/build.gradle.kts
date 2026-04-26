@@ -30,8 +30,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -39,10 +39,13 @@ android {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 dependencies {
+    implementation(libs.androidx.ui.text)
+    implementation(libs.androidx.ui)
+    implementation(libs.googleid)
     val roomVersion = "2.6.1"
     val lifecycleVersion = "2.8.7"
 
@@ -71,6 +74,9 @@ dependencies {
 
     // WorkManager
     implementation(libs.androidx.work.runtime.ktx)
+
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
 
     // Room
     implementation("androidx.room:room-runtime:$roomVersion")

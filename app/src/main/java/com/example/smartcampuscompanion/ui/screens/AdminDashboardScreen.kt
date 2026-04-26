@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.smartcampuscompanion.domain.model.Announcement
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.ui.theme.TealSecondary
 import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
@@ -31,7 +32,8 @@ fun AdminDashboardScreen(
     onLogoutClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showAddDialog by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var announcementToEdit by remember { mutableStateOf<Announcement?>(null) }
 
     Scaffold(
         topBar = {
@@ -53,7 +55,10 @@ fun AdminDashboardScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showAddDialog = true },
+                onClick = { 
+                    announcementToEdit = null
+                    showDialog = true 
+                },
                 containerColor = TealPrimary,
                 contentColor = Color.White,
                 shape = CircleShape
@@ -79,13 +84,31 @@ fun AdminDashboardScreen(
             )
 
             // Dedicated List for CRUD
-            AnnouncementManagementList(announcementViewModel)
+            AnnouncementManagementList(
+                viewModel = announcementViewModel,
+                onEdit = { announcement ->
+                    announcementToEdit = announcement
+                    showDialog = true
+                }
+            )
         }
     }
 
-    if (showAddDialog) {
-        // Here you would add a dialog to create a new announcement
-        // For now, let's keep it simple
+    if (showDialog) {
+        AdminAnnouncementDialog(
+            announcement = announcementToEdit,
+            onDismiss = { showDialog = false },
+            onConfirm = { title, desc ->
+                if (announcementToEdit == null) {
+                    announcementViewModel.postAnnouncement(title, desc)
+                } else {
+                    announcementViewModel.updateAnnouncement(
+                        announcementToEdit!!.copy(title = title, description = desc)
+                    )
+                }
+                showDialog = false
+            }
+        )
     }
 }
 
@@ -130,8 +153,11 @@ fun AdminStatsHeader(adminName: String) {
 }
 
 @Composable
-fun AnnouncementManagementList(viewModel: AnnouncementViewModel) {
-    val announcements by viewModel.announcements.collectAsState()
+fun AnnouncementManagementList(
+    viewModel: AnnouncementViewModel,
+    onEdit: (Announcement) -> Unit
+) {
+    val announcements by viewModel.allAnnouncements.collectAsState()
 
     if (announcements.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -144,10 +170,9 @@ fun AnnouncementManagementList(viewModel: AnnouncementViewModel) {
         ) {
             items(announcements) { announcement ->
                 AdminAnnouncementCard(
-                    title = announcement.title,
-                    desc = announcement.description,
-                    onDelete = { /* viewModel.deleteAnnouncement(announcement.id) */ },
-                    onEdit = { /* Navigate to Edit */ }
+                    announcement = announcement,
+                    onDelete = { viewModel.deleteAnnouncement(announcement) },
+                    onEdit = { onEdit(announcement) }
                 )
             }
         }
@@ -155,7 +180,7 @@ fun AnnouncementManagementList(viewModel: AnnouncementViewModel) {
 }
 
 @Composable
-fun AdminAnnouncementCard(title: String, desc: String, onDelete: () -> Unit, onEdit: () -> Unit) {
+fun AdminAnnouncementCard(announcement: Announcement, onDelete: () -> Unit, onEdit: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -167,12 +192,13 @@ fun AdminAnnouncementCard(title: String, desc: String, onDelete: () -> Unit, onE
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Text(text = announcement.title, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = desc,
+                    text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
-                    maxLines = 1
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
             }
             IconButton(onClick = onEdit) {
@@ -183,4 +209,46 @@ fun AdminAnnouncementCard(title: String, desc: String, onDelete: () -> Unit, onE
             }
         }
     }
+}
+
+@Composable
+fun AdminAnnouncementDialog(
+    announcement: Announcement?,
+    onDismiss: () -> Unit,
+    onConfirm: (String, String) -> Unit
+) {
+    var title by remember { mutableStateOf(announcement?.title ?: "") }
+    var desc by remember { mutableStateOf(announcement?.description ?: "") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(if (announcement == null) "Post New Announcement" else "Edit Announcement") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = desc,
+                    onValueChange = { desc = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 3
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(title, desc) },
+                enabled = title.isNotBlank() && desc.isNotBlank(),
+                colors = ButtonDefaults.buttonColors(containerColor = TealPrimary)
+            ) { Text(if (announcement == null) "Post" else "Update") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        }
+    )
 }

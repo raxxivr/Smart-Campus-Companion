@@ -35,6 +35,8 @@ fun SettingsScreen(
     onAnnouncementsClick: () -> Unit,
     onTasksClick: () -> Unit,
     onCampusClick: () -> Unit,
+    onEditProfileClick: () -> Unit,
+    onPrivacyClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val notifications by viewModel.notificationsEnabled.collectAsStateWithLifecycle()
@@ -157,7 +159,7 @@ fun SettingsScreen(
                             SettingsActionRow(
                                 icon = Icons.Default.Person,
                                 title = "Edit Profile",
-                                onClick = { /* Navigate to Edit Profile */ }
+                                onClick = onEditProfileClick
                             )
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
@@ -166,7 +168,7 @@ fun SettingsScreen(
                             SettingsActionRow(
                                 icon = Icons.Default.Lock,
                                 title = "Security & Privacy",
-                                onClick = { /* Navigate to Security */ }
+                                onClick = onPrivacyClick
                             )
                         }
                     }

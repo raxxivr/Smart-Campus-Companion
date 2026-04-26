@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.SessionManager
+import com.example.smartcampuscompanion.domain.model.User
 import com.example.smartcampuscompanion.domain.repository.UserRepository
 import kotlinx.coroutines.launch
 
@@ -70,13 +71,13 @@ class LoginViewModel(
                         email = user.email,
                         studentNumber = user.studentNumber,
                         course = user.course,
-                        role = "STUDENT" // Default role for regular users
+                        role = user.role
                     )
                     _currentUserFullName.value = user.fullName
                     _currentUserEmail.value = user.email
                     _currentStudentNumber.value = user.studentNumber
                     _currentCourse.value = user.course
-                    _role.value = "STUDENT"
+                    _role.value = user.role
                     
                     _isLoggedIn.value = true
                     _loginError.value = null
@@ -85,6 +86,56 @@ class LoginViewModel(
                 }
             }
             _isLoading.value = false
+        }
+    }
+
+    fun loginWithGoogle(idToken: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = userRepository.loginWithGoogle(idToken)
+            
+            result.onSuccess { user ->
+                sessionManager.createLoginSession(
+                    fullName = user.fullName,
+                    email = user.email,
+                    studentNumber = user.studentNumber,
+                    course = user.course,
+                    role = user.role
+                )
+                _currentUserFullName.value = user.fullName
+                _currentUserEmail.value = user.email
+                _currentStudentNumber.value = user.studentNumber
+                _currentCourse.value = user.course
+                _role.value = user.role
+                
+                _isLoggedIn.value = true
+                _loginError.value = null
+            }.onFailure { exception ->
+                _loginError.value = exception.message ?: "Google Sign-In failed"
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun updateProfile(user: User, onComplete: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val result = userRepository.updateUserProfile(user)
+            if (result.isSuccess) {
+                // Update local session and state
+                sessionManager.createLoginSession(
+                    fullName = user.fullName,
+                    email = user.email,
+                    studentNumber = user.studentNumber,
+                    course = user.course,
+                    role = user.role
+                )
+                _currentUserFullName.value = user.fullName
+                _currentStudentNumber.value = user.studentNumber
+                _currentCourse.value = user.course
+                onComplete(true)
+            } else {
+                onComplete(false)
+            }
         }
     }
 

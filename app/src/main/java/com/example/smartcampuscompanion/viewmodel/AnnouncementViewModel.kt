@@ -33,13 +33,6 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         
         // Trigger sync
         syncAnnouncements()
-        
-        // Note: Read status is currently local-only in the existing design
-        /* readStatusJob = viewModelScope.launch {
-            repository.getReadAnnouncementIds(email).collectLatest { ids ->
-                _readAnnouncementIds.value = ids.toSet()
-            }
-        } */
     }
 
     private fun syncAnnouncements() {
@@ -67,11 +60,19 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         }
     }
 
+    fun updateAnnouncement(announcement: Announcement) {
+        viewModelScope.launch {
+            // Update logic here. Assuming the repository has an update method.
+            // For now, we reuse postAnnouncement logic if it handles REPLACE, 
+            // but ideally we call repository.updateTask equivalent for Announcements.
+            repository.postAnnouncement(announcement)
+        }
+    }
+
     fun markAsRead(announcementId: Int) {
         if (currentUserEmail.isEmpty() || currentUserEmail == "admin@smartcampus.com") return
         viewModelScope.launch {
             // repository.markAsRead(currentUserEmail, announcementId) 
-            // Note: Update repository interface if markAsRead needs to be part of Domain
         }
     }
 

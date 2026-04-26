@@ -36,6 +36,11 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
 import com.example.smartcampuscompanion.worker.WorkManagerHelper
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -56,7 +61,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
     }
@@ -84,6 +89,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val context = LocalContext.current
+            val scope = rememberCoroutineScope()
+            val credentialManager = remember { CredentialManager.create(context) }
             
             // Firebase Instances
             val auth = remember { FirebaseAuth.getInstance() }
@@ -136,9 +143,11 @@ class MainActivity : ComponentActivity() {
                             announcementViewModel.loadReadStatus(email)
                         }
                         
-                        // Decide where to go: Dashboard or Announcements from notification
-                        val targetRoute = if (intent.getBooleanExtra("OPEN_ANNOUNCEMENTS", false)) {
+                        val role = sessionManager.getRole()
+                        val targetRoute = if (intent?.getBooleanExtra("OPEN_ANNOUNCEMENTS", false) == true) {
                             "announcements"
+                        } else if (role == "ADMIN") {
+                            "admin_dashboard"
                         } else {
                             "dashboard"
                         }
@@ -158,26 +167,6 @@ class MainActivity : ComponentActivity() {
                 sessionManager.getEmail()?.let { email ->
                     taskViewModel.loadTasksForUser(email)
                     announcementViewModel.loadReadStatus(email)
-                }
-            }
-
-            LaunchedEffect(isLoggedIn, showSplash) {
-                if (!showSplash) {
-                    if (isLoggedIn) {
-                        loginViewModel.userEmail?.let { email ->
-                            taskViewModel.loadTasksForUser(email)
-                            announcementViewModel.loadReadStatus(email)
-                        }
-                        
-                        val destination = if (sessionManager.getRole() == "ADMIN") "admin_dashboard" else "dashboard"
-                        navController.navigate(destination) {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    } else {
-                        navController.navigate("login") {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    }
                 }
             }
 
@@ -205,7 +194,25 @@ class MainActivity : ComponentActivity() {
                                             navController.navigate("signup")
                                         },
                                         onGoogleSignInClick = {
-                                            Toast.makeText(context, "Google Sign-In coming soon!", Toast.LENGTH_SHORT).show()
+                                            scope.launch {
+                                                val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
+                                                    .setFilterByAuthorizedAccounts(false)
+                                                    .setServerClientId("1019161334414-dfkotnvcne1a7e1jmqi88ubm6dkljqt5.apps.googleusercontent.com")
+                                                    .setAutoSelectEnabled(true)
+                                                    .build()
+
+                                                val request = GetCredentialRequest.Builder()
+                                                    .addCredentialOption(googleIdOption)
+                                                    .build()
+
+                                                try {
+                                                    val result = credentialManager.getCredential(context, request)
+                                                    val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
+                                                    loginViewModel.loginWithGoogle(googleIdTokenCredential.idToken)
+                                                } catch (e: Exception) {
+                                                    Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                                                }
+                                            }
                                         }
                                     )
                                 }
@@ -218,41 +225,32 @@ class MainActivity : ComponentActivity() {
                                         onBackToLoginClick = {
                                             navController.popBackStack()
                                         },
-                                        viewModel = signupViewModel,
-                                        onGoogleSignupClick = {
-                                             Toast.makeText(context, "Google Sign-Up coming soon!", Toast.LENGTH_SHORT).show()
-                                        }
+                                        viewModel = signupViewModel
                                     )
                                 }
 
                                 composable("dashboard") {
-                                    // SECURITY GUARD: Check if user is Admin and redirect if necessary
-                                    if (sessionManager.getRole() == "ADMIN") {
-                                        LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
-                                    } else {
-                                        DashboardScreen(
-                                            username = loginViewModel.fullName,
-                                            taskViewModel = taskViewModel,
-                                            onAnnouncementsClick = { navController.navigate("announcements") },
-                                            onTasksClick = { navController.navigate("task_manager") },
-                                            onCampusInfoClick = { navController.navigate("campus_info") },
-                                            onSettingsClick = { navController.navigate("settings") },
-                                            onCalendarClick = { navController.navigate("calendar_module") }
-                                        )
-                                    }
+                                    DashboardScreen(
+                                        fullName = loginViewModel.fullName,
+                                        studentNumber = loginViewModel.studentNumber,
+                                        course = loginViewModel.course,
+                                        taskViewModel = taskViewModel,
+                                        announcementViewModel = announcementViewModel,
+                                        campusViewModel = campusInfoViewModel,
+                                        onAnnouncementsClick = { navController.navigate("announcements") },
+                                        onTasksClick = { navController.navigate("task_manager") },
+                                        onCampusInfoClick = { navController.navigate("campus_info") },
+                                        onSettingsClick = { navController.navigate("settings") },
+                                        onCalendarClick = { navController.navigate("calendar_module") }
+                                    )
                                 }
 
                                 composable("admin_dashboard") {
-                                    // SECURITY GUARD: Check if user is NOT Admin and redirect if necessary
-                                    if (sessionManager.getRole() != "ADMIN") {
-                                        LaunchedEffect(Unit) { navController.navigate("dashboard") }
-                                    } else {
-                                        AdminDashboardScreen(
-                                            loginViewModel = loginViewModel,
-                                            announcementViewModel = announcementViewModel,
-                                            onLogoutClick = { loginViewModel.logout() }
-                                        )
-                                    }
+                                    AdminDashboardScreen(
+                                        loginViewModel = loginViewModel,
+                                        announcementViewModel = announcementViewModel,
+                                        onLogoutClick = { loginViewModel.logout() }
+                                    )
                                 }
 
                                 composable("announcements") {
@@ -272,7 +270,6 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable("campus_info") {
-                                    // SECURITY GUARD: Prevent Admin from accessing Student-only info
                                     if (sessionManager.getRole() == "ADMIN") {
                                         LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
                                     } else {
@@ -288,7 +285,6 @@ class MainActivity : ComponentActivity() {
                                 }
 
                                 composable("task_manager") {
-                                    // SECURITY GUARD: Prevent Admin from accessing Student-only tasks
                                     if (sessionManager.getRole() == "ADMIN") {
                                         LaunchedEffect(Unit) { navController.navigate("admin_dashboard") }
                                     } else {
@@ -324,7 +320,22 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onAnnouncementsClick = { navController.navigate("announcements") },
                                         onTasksClick = { navController.navigate("task_manager") },
-                                        onCampusClick = { navController.navigate("campus_info") }
+                                        onCampusClick = { navController.navigate("campus_info") },
+                                        onEditProfileClick = { navController.navigate("edit_profile") },
+                                        onPrivacyClick = { navController.navigate("privacy") }
+                                    )
+                                }
+
+                                composable("edit_profile") {
+                                    EditProfileScreen(
+                                        viewModel = loginViewModel,
+                                        onBackClick = { navController.popBackStack() }
+                                    )
+                                }
+
+                                composable("privacy") {
+                                    PrivacyScreen(
+                                        onBackClick = { navController.popBackStack() }
                                     )
                                 }
                             }
