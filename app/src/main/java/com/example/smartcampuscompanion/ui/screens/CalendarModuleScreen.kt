@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.smartcampuscompanion.data.Task
+import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.TaskViewModel
 import java.text.SimpleDateFormat
@@ -61,24 +61,26 @@ fun CalendarModuleScreen(
                     title = { Text("Calendar", fontWeight = FontWeight.Bold) },
                     navigationIcon = {
                         IconButton(onClick = onBackClick) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
-                        titleContentColor = TealPrimary
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = TealPrimary,
+                        navigationIconContentColor = TealPrimary
                     )
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             state = listState,
             modifier = modifier
                 .fillMaxSize()
                 .padding(padding)
-                .background(Color.White)
+                .background(MaterialTheme.colorScheme.background)
         ) {
             items(monthList) { month ->
                 MonthSection(
@@ -144,7 +146,7 @@ fun CalendarFullGrid(currentMonth: Calendar, tasks: List<Task>, onDateClick: (Ca
                     modifier = Modifier.weight(1f),
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelSmall,
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -158,7 +160,7 @@ fun CalendarFullGrid(currentMonth: Calendar, tasks: List<Task>, onDateClick: (Ca
                         modifier = Modifier
                             .weight(1f)
                             .fillMaxHeight()
-                            .border(0.5.dp, Color.LightGray.copy(alpha = 0.2f))
+                            .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                             .clickable(enabled = day != null) {
                                 if (day != null) {
                                     val dayTasks = tasks.filter { isSameDay(it.dueDate, day.timeInMillis) }
@@ -173,7 +175,7 @@ fun CalendarFullGrid(currentMonth: Calendar, tasks: List<Task>, onDateClick: (Ca
                 }
                 if (week.size < 7) {
                     repeat(7 - week.size) { 
-                        Box(modifier = Modifier.weight(1f).fillMaxHeight().border(0.5.dp, Color.LightGray.copy(alpha = 0.2f))) 
+                        Box(modifier = Modifier.weight(1f).fillMaxHeight().border(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))) 
                     }
                 }
             }
@@ -194,7 +196,7 @@ fun CalendarDayCell(day: Calendar, tasks: List<Task>) {
             text = day.get(Calendar.DAY_OF_MONTH).toString(),
             style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
             fontWeight = if (isToday) FontWeight.ExtraBold else FontWeight.Medium,
-            color = if (isToday) Color.White else Color.Black,
+            color = if (isToday) Color.White else MaterialTheme.colorScheme.onSurface,
             modifier = if (isToday) Modifier
                 .background(Color.Red, CircleShape)
                 .size(24.dp)
@@ -219,7 +221,7 @@ fun CalendarDayCell(day: Calendar, tasks: List<Task>) {
                     Text(
                         text = task.title,
                         style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp, fontWeight = FontWeight.Bold),
-                        color = if (task.isCompleted) Color.Gray else Color.White,
+                        color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else Color.White,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -229,7 +231,7 @@ fun CalendarDayCell(day: Calendar, tasks: List<Task>) {
                 Text(
                     text = "+${dayTasks.size - 3} more",
                     style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
-                    color = Color.Gray,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 2.dp)
                 )
             }
@@ -244,7 +246,7 @@ fun TaskViewDialog(dateText: String, tasks: List<Task>, onDismiss: () -> Unit) {
         title = { Text(dateText, fontWeight = FontWeight.Bold, color = TealPrimary) },
         text = {
             if (tasks.isEmpty()) {
-                Text("No tasks for this day.", color = Color.Gray)
+                Text("No tasks for this day.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             } else {
                 LazyColumn(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp),
@@ -254,7 +256,10 @@ fun TaskViewDialog(dateText: String, tasks: List<Task>, onDismiss: () -> Unit) {
                         val categoryColor = getCategoryColor(task.category)
                         Card(
                             modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(containerColor = categoryColor.copy(alpha = 0.1f)),
+                            colors = CardDefaults.cardColors(
+                                containerColor = categoryColor.copy(alpha = 0.1f),
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ),
                             border = BorderStroke(1.dp, categoryColor.copy(alpha = 0.3f))
                         ) {
                             Row(
@@ -273,7 +278,7 @@ fun TaskViewDialog(dateText: String, tasks: List<Task>, onDismiss: () -> Unit) {
                                         text = task.title,
                                         style = MaterialTheme.typography.bodyMedium,
                                         fontWeight = FontWeight.Bold,
-                                        color = if (task.isCompleted) Color.Gray else Color.Black
+                                        color = if (task.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
                                         text = task.category,

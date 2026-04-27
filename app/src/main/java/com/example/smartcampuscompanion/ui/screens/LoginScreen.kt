@@ -1,5 +1,7 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -25,24 +28,46 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
+import com.example.smartcampuscompanion.ui.components.ErrorDialog
+import com.example.smartcampuscompanion.ui.components.StyledButton
+import com.example.smartcampuscompanion.ui.theme.TealPrimary
+import com.example.smartcampuscompanion.viewmodel.LoginViewModel
 
 @Composable
 fun LoginScreen(
-    onLoginClick: (String, String) -> Unit = { _, _ -> },
-    onForgotPasswordClick: () -> Unit = {},
-    onSignUpClick: () -> Unit = {},
+    viewModel: LoginViewModel,
+    onLoginClick: (String, String) -> Unit,
+    onSignUpClick: () -> Unit,
+    onGoogleSignInClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var emailError by remember { mutableStateOf<String?>(null) }
-
+    var isGoogleLoginInProgress by remember { mutableStateOf(false) }
+    
+    val loginError by viewModel.loginError
+    val isLoading by viewModel.isLoading
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+
+    // Reset the internal Google loading state when ViewModel loading finishes
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            isGoogleLoginInProgress = false
+        }
+    }
+
+    LaunchedEffect(loginError) {
+        loginError?.let {
+            Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+            viewModel.clearError()
+            isGoogleLoginInProgress = false
+        }
+    }
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -65,24 +90,9 @@ fun LoginScreen(
 
             EmailField(
                 value = email,
-                onValueChange = {
-                    email = it
-                    emailError = null
-                },
-                onNext = { focusManager.moveFocus(FocusDirection.Down) },
-                isError = emailError != null
+                onValueChange = { email = it },
+                onNext = { focusManager.moveFocus(FocusDirection.Down) }
             )
-
-            if (emailError != null) {
-                Text(
-                    text = emailError!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, top = 4.dp)
-                )
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -93,41 +103,103 @@ fun LoginScreen(
                 onPasswordVisibilityToggle = { passwordVisible = !passwordVisible },
                 onDone = {
                     focusManager.clearFocus()
-                    if (email.isBlank()) {
-                        emailError = "Email is required"
-                    } else if (!email.contains("@")) {
-                        emailError = "Please enter a valid email"
-                    } else if (password.isNotBlank()) {
-                        emailError = null
-                        onLoginClick(email, password)
-                    }
+                    onLoginClick(email, password)
                 }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            ForgotPasswordButton(onClick = onForgotPasswordClick)
-
             Spacer(modifier = Modifier.height(24.dp))
 
-            LoginButton(
+            StyledButton(
+                text = "Login",
                 onClick = {
-                    if (email.isBlank()) {
-                        emailError = "Email is required"
-                    } else if (!email.contains("@")) {
-                        emailError = "Please enter a valid email"
-                    } else if (password.isNotBlank()) {
-                        emailError = null
-                        onLoginClick(email, password)
-                    }
+                    focusManager.clearFocus()
+                    onLoginClick(email, password)
                 },
-                enabled = email.isNotBlank() && password.isNotBlank()
+                isLoading = isLoading && !isGoogleLoginInProgress,
+                enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
             )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // OR divider
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray.copy(alpha = 0.5f))
+                Text(
+                    text = " OR ",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                HorizontalDivider(modifier = Modifier.weight(1f), color = Color.LightGray.copy(alpha = 0.5f))
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            // Google Sign In Button
+            OutlinedButton(
+                onClick = {
+                    isGoogleLoginInProgress = true
+                    onGoogleSignInClick()
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(12.dp),
+                border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
+                enabled = !isLoading && !isGoogleLoginInProgress
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    if (isGoogleLoginInProgress) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = TealPrimary,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Signing in...",
+                            color = Color.Gray,
+                            fontWeight = FontWeight.Medium
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_google_logo),
+                            contentDescription = "Google Logo",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.Unspecified
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Continue with Google",
+                            color = Color(0xFF2D3142),
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 
             SignUpSection(onSignUpClick = onSignUpClick)
         }
+    }
+
+    // Show Error Dialog if login fails
+    if (loginError != null) {
+        ErrorDialog(
+            message = loginError!!,
+            onDismiss = { 
+                viewModel.clearError()
+                isGoogleLoginInProgress = false
+            }
+        )
     }
 }
 
@@ -167,8 +239,7 @@ private fun WelcomeSection() {
 private fun EmailField(
     value: String,
     onValueChange: (String) -> Unit,
-    onNext: () -> Unit,
-    isError: Boolean = false
+    onNext: () -> Unit
 ) {
     OutlinedTextField(
         value = value,
@@ -179,12 +250,11 @@ private fun EmailField(
             Icon(
                 imageVector = Icons.Default.Email,
                 contentDescription = "Email Icon",
-                tint = Color(0xFF00CED1)
+                tint = TealPrimary
             )
         },
         modifier = Modifier.fillMaxWidth(),
         singleLine = true,
-        isError = isError,
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Email,
             imeAction = ImeAction.Next
@@ -194,12 +264,10 @@ private fun EmailField(
         ),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF00CED1),
-            unfocusedBorderColor = Color(0xFFB0BEC5),
-            focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1),
-            errorBorderColor = MaterialTheme.colorScheme.error,
-            errorLabelColor = MaterialTheme.colorScheme.error
+            focusedBorderColor = TealPrimary,
+            unfocusedBorderColor = Color.LightGray,
+            focusedLabelColor = TealPrimary,
+            cursorColor = TealPrimary
         )
     )
 }
@@ -220,7 +288,7 @@ private fun PasswordField(
             Icon(
                 imageVector = Icons.Default.Lock,
                 contentDescription = "Password Icon",
-                tint = Color(0xFF00CED1)
+                tint = TealPrimary
             )
         },
         trailingIcon = {
@@ -228,7 +296,7 @@ private fun PasswordField(
                 Icon(
                     imageVector = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
                     contentDescription = if (passwordVisible) "Hide Password" else "Show Password",
-                    tint = Color(0xFF00CED1)
+                    tint = TealPrimary
                 )
             }
         },
@@ -247,55 +315,12 @@ private fun PasswordField(
         ),
         shape = RoundedCornerShape(12.dp),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = Color(0xFF00CED1),
-            unfocusedBorderColor = Color(0xFFB0BEC5),
-            focusedLabelColor = Color(0xFF00CED1),
-            cursorColor = Color(0xFF00CED1)
+            focusedBorderColor = TealPrimary,
+            unfocusedBorderColor = Color.LightGray,
+            focusedLabelColor = TealPrimary,
+            cursorColor = TealPrimary
         )
     )
-}
-
-@Composable
-private fun ForgotPasswordButton(onClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End
-    ) {
-        TextButton(onClick = onClick) {
-            Text(
-                text = "Forgot Password?",
-                color = Color(0xFF00CED1),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
-            )
-        }
-    }
-}
-
-@Composable
-private fun LoginButton(
-    onClick: () -> Unit,
-    enabled: Boolean
-) {
-    Button(
-        onClick = onClick,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(56.dp),
-        shape = RoundedCornerShape(12.dp),
-        enabled = enabled,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color(0xFF008B8B),
-            contentColor = Color.White
-        )
-    ) {
-        Text(
-            text = "Login",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.ExtraBold,
-            letterSpacing = 1.sp
-        )
-    }
 }
 
 @Composable
@@ -307,12 +332,12 @@ private fun SignUpSection(onSignUpClick: () -> Unit = {}) {
         Text(
             text = "Don't have an account?",
             style = MaterialTheme.typography.bodyMedium,
-            color = Color(0xFF008B8B).copy(alpha = 0.7f)
+            color = Color.Gray
         )
         TextButton(onClick = onSignUpClick) {
             Text(
                 text = "Sign Up",
-                color = Color(0xFF00CED1),
+                color = TealPrimary,
                 fontWeight = FontWeight.Bold
             )
         }

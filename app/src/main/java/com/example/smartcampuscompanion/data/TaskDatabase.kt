@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Task::class, User::class, Announcement::class, ReadAnnouncement::class], version = 7, exportSchema = false)
+@Database(entities = [Task::class, User::class, Announcement::class, ReadAnnouncement::class], version = 9, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
@@ -49,10 +49,23 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
 
-        // Migration from 6 to 7: adds the 'read_announcements' cross-reference table
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("CREATE TABLE IF NOT EXISTS `read_announcements` (`userEmail` TEXT NOT NULL, `announcementId` INTEGER NOT NULL, PRIMARY KEY(`userEmail`, `announcementId`))")
+            }
+        }
+
+        // Migration from 7 to 8: adds the 'role' column to the 'users' table
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'STUDENT'")
+            }
+        }
+
+        // Migration from 8 to 9: adds the 'firestoreId' column to the 'announcements' table
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE announcements ADD COLUMN firestoreId TEXT NOT NULL DEFAULT ''")
             }
         }
 
@@ -63,7 +76,8 @@ abstract class TaskDatabase : RoomDatabase() {
                     TaskDatabase::class.java,
                     "task_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance

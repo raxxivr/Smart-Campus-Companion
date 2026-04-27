@@ -2,8 +2,8 @@ package com.example.smartcampuscompanion.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartcampuscompanion.data.Announcement
-import com.example.smartcampuscompanion.data.AnnouncementRepository
+import com.example.smartcampuscompanion.domain.model.Announcement
+import com.example.smartcampuscompanion.domain.repository.AnnouncementRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -12,7 +12,7 @@ import java.util.*
 
 class AnnouncementViewModel(private val repository: AnnouncementRepository) : ViewModel() {
 
-    val allAnnouncements: StateFlow<List<Announcement>> = repository.allAnnouncements
+    val allAnnouncements: StateFlow<List<Announcement>> = repository.getAnnouncements()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -30,10 +30,14 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         
         currentUserEmail = email
         readStatusJob?.cancel()
-        readStatusJob = viewModelScope.launch {
-            repository.getReadAnnouncementIds(email).collectLatest { ids ->
-                _readAnnouncementIds.value = ids.toSet()
-            }
+        
+        // Trigger sync
+        syncAnnouncements()
+    }
+
+    private fun syncAnnouncements() {
+        viewModelScope.launch {
+            repository.syncAnnouncementsWithCloud()
         }
     }
 
@@ -43,29 +47,38 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         _readAnnouncementIds.value = emptySet()
     }
 
-    fun postAnnouncement(title: String, description: String) {
+    fun postAnnouncement(title: String, description: String, onResult: (Boolean) -> Unit) {
         val currentDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date())
         viewModelScope.launch {
-            repository.insert(
+            val success = repository.postAnnouncement(
                 Announcement(
                     title = title,
                     description = description,
                     date = currentDate
                 )
             )
+            onResult(success)
+        }
+    }
+
+    fun updateAnnouncement(announcement: Announcement, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            val success = repository.updateAnnouncement(announcement)
+            onResult(success)
         }
     }
 
     fun markAsRead(announcementId: Int) {
         if (currentUserEmail.isEmpty() || currentUserEmail == "admin@smartcampus.com") return
         viewModelScope.launch {
-            repository.markAsRead(currentUserEmail, announcementId)
+            // repository.markAsRead(currentUserEmail, announcementId) 
         }
     }
 
-    fun deleteAnnouncement(announcement: Announcement) {
+    fun deleteAnnouncement(announcement: Announcement, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            repository.delete(announcement)
+            val success = repository.deleteAnnouncement(announcement)
+            onResult(success)
         }
     }
 }

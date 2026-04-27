@@ -2,8 +2,8 @@ package com.example.smartcampuscompanion.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartcampuscompanion.data.User
-import com.example.smartcampuscompanion.data.UserRepository
+import com.example.smartcampuscompanion.domain.model.User
+import com.example.smartcampuscompanion.domain.repository.UserRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,27 +85,29 @@ class SignupViewModel(private val userRepository: UserRepository) : ViewModel() 
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             
-            // Check if user already exists
-            val existingUser = userRepository.getUserByEmail(state.email)
-            if (existingUser != null) {
-                _uiState.update { it.copy(errorMessage = "Email already registered", isLoading = false) }
-                return@launch
-            }
-
             val newUser = User(
                 fullName = state.fullName,
                 email = state.email,
                 studentNumber = state.studentNumber,
-                course = state.course,
-                password = state.password
+                course = state.course
             )
-            userRepository.registerUser(newUser)
-            _uiState.update { it.copy(isLoading = false, isSignupSuccessful = true) }
+            
+            val result = userRepository.registerUser(newUser, state.password)
+            
+            result.onSuccess {
+                _uiState.update { it.copy(isLoading = false, isSignupSuccessful = true) }
+            }.onFailure { exception ->
+                _uiState.update { it.copy(errorMessage = exception.message ?: "Signup failed", isLoading = false) }
+            }
         }
     }
 
     fun clearForm() {
         _uiState.value = SignupUiState()
+    }
+
+    fun clearError() {
+        _uiState.update { it.copy(errorMessage = null) }
     }
 
     fun resetSignupSuccess() {

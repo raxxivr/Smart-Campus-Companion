@@ -2,7 +2,7 @@ package com.example.smartcampuscompanion.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.example.smartcampuscompanion.data.UserRepository
+import com.example.smartcampuscompanion.domain.repository.UserRepository
 
 class SignupViewModelFactory(private val repository: UserRepository) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {

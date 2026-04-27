@@ -8,25 +8,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.R
-import com.example.smartcampuscompanion.data.Announcement
 import com.example.smartcampuscompanion.data.Department
-import com.example.smartcampuscompanion.data.Task
+import com.example.smartcampuscompanion.domain.model.Announcement
+import com.example.smartcampuscompanion.domain.model.Task
 import com.example.smartcampuscompanion.ui.components.BottomNavBar
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.viewmodel.AnnouncementViewModel
@@ -51,6 +52,9 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedAnnouncement by remember { mutableStateOf<Announcement?>(null) }
+    val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
+
     Scaffold(
         topBar = {
             Column {
@@ -72,13 +76,11 @@ fun DashboardScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.White,
-                        titleContentColor = TealPrimary,
-                        navigationIconContentColor = TealPrimary
-                    ),
-                    windowInsets = WindowInsets.statusBars
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = TealPrimary
+                    )
                 )
-                HorizontalDivider(color = Color.LightGray.copy(alpha = 0.5f), thickness = 1.dp)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
             }
         },
         bottomBar = {
@@ -90,7 +92,8 @@ fun DashboardScreen(
                 onCampusClick = onCampusInfoClick,
                 onSettingsClick = onSettingsClick
             )
-        }
+        },
+        containerColor = MaterialTheme.colorScheme.background
     ) { innerPadding ->
         DashboardContent(
             fullName = fullName,
@@ -99,11 +102,24 @@ fun DashboardScreen(
             taskViewModel = taskViewModel,
             announcementViewModel = announcementViewModel,
             campusViewModel = campusViewModel,
+            onCalendarClick = onCalendarClick,
             onAnnouncementsClick = onAnnouncementsClick,
             onCampusInfoClick = onCampusInfoClick,
-            onCalendarClick = onCalendarClick,
+            onAnnouncementClick = { announcement ->
+                selectedAnnouncement = announcement
+                if (!readAnnouncementIds.contains(announcement.id)) {
+                    announcementViewModel.markAsRead(announcement.id)
+                }
+            },
             modifier = Modifier.padding(innerPadding)
         )
+
+        selectedAnnouncement?.let { announcement ->
+            AnnouncementDetailDialog(
+                announcement = announcement,
+                onDismiss = { selectedAnnouncement = null }
+            )
+        }
     }
 }
 
@@ -115,48 +131,56 @@ fun DashboardContent(
     taskViewModel: TaskViewModel,
     announcementViewModel: AnnouncementViewModel,
     campusViewModel: CampusInfoViewModel,
+    onCalendarClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
-    onCalendarClick: () -> Unit,
+    onAnnouncementClick: (Announcement) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
     val announcements by announcementViewModel.allAnnouncements.collectAsState()
     val departments by campusViewModel.departments.collectAsState()
     val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
-    
-    val calendar = Calendar.getInstance()
-    val dayName = SimpleDateFormat("EEEE", Locale.getDefault()).format(calendar.time)
-    val dayNumber = calendar.get(Calendar.DAY_OF_MONTH).toString()
+
+    val locale = LocalConfiguration.current.locales[0]
+    val calendar = remember { Calendar.getInstance() }
+    val dayName = remember(locale) { SimpleDateFormat("EEEE", locale).format(calendar.time) }
+    val dayNumber = remember { calendar.get(Calendar.DAY_OF_MONTH).toString() }
 
     val todayTasks = tasks.filter { isSameDay(it.dueDate, calendar.timeInMillis) && !it.isCompleted }
     val tomorrow = (calendar.clone() as Calendar).apply { add(Calendar.DAY_OF_YEAR, 1) }
     val tomorrowTasks = tasks.filter { isSameDay(it.dueDate, tomorrow.timeInMillis) && !it.isCompleted }
 
     LazyColumn(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Color(0xFFFBFBFF)),
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp)
     ) {
-        // Header Section
         item {
-            Column {
+            Column(modifier = Modifier.padding(top = 8.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Hello, ",
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "${fullName?.split(" ")?.firstOrNull() ?: "Student"}!",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = TealPrimary
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "Hello, ${fullName ?: "student"}!",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "ID: ${studentNumber ?: "2024-XXXX"} • ${course ?: "Regular Student"}",
+                    text = if (fullName == "Admin") "Administrator Access" else "ID: ${studentNumber ?: "---"} • ${course ?: "BSIT - 3rd Year"}",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    fontWeight = FontWeight.Medium
                 )
             }
         }
 
-        // Calendar Widget Section
         item {
             CalendarWidget(
                 dayNumber = dayNumber,
@@ -167,7 +191,6 @@ fun DashboardContent(
             )
         }
 
-        // Campus Info Preview Section
         item {
             Column {
                 SectionHeader(
@@ -177,7 +200,11 @@ fun DashboardContent(
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 if (departments.isEmpty()) {
-                    Text("No campus info available.", color = Color.Gray, modifier = Modifier.padding(16.dp))
+                    Text(
+                        "No campus info available.",
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(16.dp)
+                    )
                 } else {
                     departments.take(3).forEach { department ->
                         CampusInfoPreviewItem(department = department, onClick = onCampusInfoClick)
@@ -186,48 +213,158 @@ fun DashboardContent(
             }
         }
 
-        // Recent Announcements Section
         item {
             Column {
-                SectionHeader(
-                    title = "Recent Announcements",
-                    onViewAllClick = onAnnouncementsClick
-                )
+                SectionHeader(title = "Recent Announcements", onViewAllClick = onAnnouncementsClick)
                 Spacer(modifier = Modifier.height(12.dp))
                 
                 val unreadAnnouncements = announcements.filter { !readAnnouncementIds.contains(it.id) }
-
+                
                 if (unreadAnnouncements.isEmpty()) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Campaign,
-                            contentDescription = null,
-                            modifier = Modifier.size(48.dp),
-                            tint = Color.LightGray
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
-                            text = "No new announcements available",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray,
-                            textAlign = TextAlign.Center
-                        )
-                    }
+                    Text(
+                        "No recent announcements",
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
                 } else {
                     unreadAnnouncements.take(3).forEach { announcement ->
                         AnnouncementItem(
-                            announcement = announcement, 
+                            announcement = announcement,
                             isRead = false,
-                            onMarkAsRead = { /* Dashboard items are not clickable for marking read as per requirement */ }
+                            onClick = { onAnnouncementClick(announcement) }
                         )
+                        Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalendarWidget(
+    dayNumber: String,
+    dayName: String,
+    tasksToShow: List<Task>,
+    isTomorrow: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val gradient = Brush.horizontalGradient(
+        colors = listOf(TealPrimary, Color(0xFF00BFA5))
+    )
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(24.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(gradient)
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .background(Color.White.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(
+                        dayName.take(3).uppercase(),
+                        color = Color.White,
+                        fontWeight = FontWeight.ExtraBold,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        dayNumber,
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(20.dp))
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        if (isTomorrow) "TOMORROW'S TASK" else "TODAY'S SCHEDULE",
+                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.sp
+                    )
+                    
+                    if (tasksToShow.isEmpty()) {
+                        Text(
+                            "All caught up!",
+                            color = Color.White,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            "No pending tasks",
+                            color = Color.White.copy(alpha = 0.7f),
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    } else {
+                        val task = tasksToShow.first()
+                        Text(
+                            task.title,
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        
+                        val locale = LocalConfiguration.current.locales[0]
+                        val timeFormat = remember(locale) { SimpleDateFormat("hh:mm a", locale) }
+                        
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                Icons.Default.Schedule,
+                                contentDescription = null,
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                timeFormat.format(Date(task.dueDate)),
+                                color = Color.White.copy(alpha = 0.8f),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Box(
+                                modifier = Modifier
+                                    .background(Color.White.copy(alpha = 0.3f), CircleShape)
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    task.category,
+                                    color = Color.White,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Icon(
+                    Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(24.dp)
+                )
             }
         }
     }
@@ -242,7 +379,7 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
             .padding(vertical = 4.dp)
             .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Row(
@@ -270,12 +407,13 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
                     text = department.location,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             Surface(
@@ -295,197 +433,103 @@ fun CampusInfoPreviewItem(department: Department, onClick: () -> Unit) {
 }
 
 @Composable
-fun CalendarWidget(
-    dayNumber: String,
-    dayName: String,
-    tasksToShow: List<Task>,
-    isTomorrow: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(110.dp)
-            .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.padding(end = 24.dp)
-            ) {
-                Text(
-                    text = dayName.take(3).uppercase(),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = Color.Red,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = dayNumber,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(1.dp)
-                    .background(Color.LightGray.copy(alpha = 0.5f))
-            )
-
-            Column(
-                modifier = Modifier
-                    .padding(start = 24.dp)
-                    .weight(1f),
-                verticalArrangement = Arrangement.Center
-            ) {
-                if (isTomorrow) {
-                    Text(
-                        "Tomorrow's Reminder:",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = TealPrimary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-                
-                if (tasksToShow.isEmpty()) {
-                    Text(
-                        "No tasks today",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.Gray,
-                        fontWeight = FontWeight.Medium
-                    )
-                } else {
-                    tasksToShow.take(2).forEachIndexed { index, task ->
-                        UpcomingItem(
-                            title = task.title,
-                            time = SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date(task.dueDate)),
-                            category = task.category
-                        )
-                        if (index == 0 && tasksToShow.size > 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun UpcomingItem(title: String, time: String, category: String) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(TealPrimary)
+fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onBackground
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "$time • $category",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
-            )
-        }
+        TextButton(onClick = onViewAllClick) { Text("View All", color = TealPrimary) }
     }
 }
 
 @Composable
-fun SectionHeader(title: String, onViewAllClick: () -> Unit = {}) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically) {
-        Text(text = title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-        if (onViewAllClick != {}) {
-            TextButton(onClick = onViewAllClick) {
-                Text("View All", color = TealPrimary, style = MaterialTheme.typography.labelLarge)
-            }
-        }
-    }
-}
-
-@Composable
-fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: () -> Unit) {
-    val backgroundColor = if (isRead) Color(0xFFF5F5F5) else Color.White
+fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onClick: () -> Unit) {
+    val backgroundColor = if (isRead) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val contentAlpha = if (isRead) 0.6f else 1f
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(if (isRead) 0.dp else 1.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(CircleShape)
-                    .background(if (isRead) Color.LightGray.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f)),
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(if (isRead) MaterialTheme.colorScheme.outline.copy(alpha = 0.3f) else TealPrimary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Campaign, 
                     contentDescription = null, 
-                    tint = if (isRead) Color.Gray else TealPrimary,
-                    modifier = Modifier.size(20.dp)
+                    tint = if (isRead) MaterialTheme.colorScheme.outline else TealPrimary,
+                    modifier = Modifier.size(24.dp)
                 )
             }
+            
             Spacer(modifier = Modifier.width(16.dp))
+            
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = announcement.title,
-                        style = MaterialTheme.typography.titleSmall,
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 1,
-                        color = if (isRead) Color.Gray else Color.Black,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f)
                     )
                     Text(
-                        text = announcement.date, 
-                        style = MaterialTheme.typography.labelSmall, 
-                        color = Color.Gray.copy(alpha = contentAlpha)
+                        text = announcement.date,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        fontWeight = FontWeight.Medium
                     )
                 }
+                
+                Spacer(modifier = Modifier.height(4.dp))
+                
                 Text(
                     text = announcement.description,
                     style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray.copy(alpha = contentAlpha),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f * contentAlpha),
                     maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    lineHeight = 18.sp
                 )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Read more",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TealPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowRight,
+                        contentDescription = null,
+                        tint = TealPrimary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
             }
         }
     }

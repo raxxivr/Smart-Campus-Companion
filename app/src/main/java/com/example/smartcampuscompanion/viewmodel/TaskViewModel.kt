@@ -2,8 +2,8 @@ package com.example.smartcampuscompanion.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.smartcampuscompanion.data.Task
-import com.example.smartcampuscompanion.data.TaskRepository
+import com.example.smartcampuscompanion.domain.model.Task
+import com.example.smartcampuscompanion.domain.repository.TaskRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,16 +24,26 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
         
         currentUserEmail = email
         tasksJob?.cancel()
+        
+        // Trigger initial sync
+        syncTasks()
+        
         tasksJob = viewModelScope.launch {
-            repository.getTasksForUser(email).collectLatest { tasks ->
+            repository.getAllTasks(email).collectLatest { tasks ->
                 _allTasks.value = tasks
             }
         }
     }
 
+    private fun syncTasks() {
+        viewModelScope.launch {
+            repository.syncTasksWithCloud(currentUserEmail)
+        }
+    }
+
     fun addTask(title: String, description: String, dueDate: Long, category: String) {
         viewModelScope.launch {
-            repository.insert(
+            repository.insertTask(
                 Task(
                     userEmail = currentUserEmail,
                     title = title,
@@ -47,13 +57,13 @@ class TaskViewModel(private val repository: TaskRepository) : ViewModel() {
 
     fun updateTask(task: Task) {
         viewModelScope.launch {
-            repository.update(task)
+            repository.updateTask(task)
         }
     }
 
     fun deleteTask(task: Task) {
         viewModelScope.launch {
-            repository.delete(task)
+            repository.deleteTask(task)
         }
     }
 }

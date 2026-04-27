@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 data class Announcement(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val title: String,
-    val description: String,
-    val date: String
+    val firestoreId: String = "",
+    val title: String = "",
+    val description: String = "",
+    val date: String = ""
 )
