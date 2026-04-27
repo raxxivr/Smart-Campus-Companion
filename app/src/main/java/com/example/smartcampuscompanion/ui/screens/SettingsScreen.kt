@@ -232,7 +232,7 @@ fun SettingsScreen(
                         SettingsInfoRow(
                             icon  = Icons.Default.Info,
                             title = "App Version",
-                            value = "1.0.0"
+                            value = "2.0.0"
                         )
                     }
                 }
