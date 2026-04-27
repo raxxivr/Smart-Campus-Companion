@@ -6,6 +6,7 @@ import com.example.smartcampuscompanion.domain.model.Announcement as Announcemen
 fun AnnouncementEntity.toDomain(): AnnouncementDomain {
     return AnnouncementDomain(
         id = id,
+        firestoreId = firestoreId,
         title = title,
         description = description,
         date = date
@@ -15,6 +16,7 @@ fun AnnouncementEntity.toDomain(): AnnouncementDomain {
 fun AnnouncementDomain.toEntity(): AnnouncementEntity {
     return AnnouncementEntity(
         id = id,
+        firestoreId = firestoreId,
         title = title,
         description = description,
         date = date

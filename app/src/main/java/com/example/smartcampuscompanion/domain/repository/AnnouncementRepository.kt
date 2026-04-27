@@ -5,7 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface AnnouncementRepository {
     fun getAnnouncements(): Flow<List<Announcement>>
-    suspend fun postAnnouncement(announcement: Announcement)
-    suspend fun deleteAnnouncement(announcement: Announcement)
+    suspend fun postAnnouncement(announcement: Announcement): Boolean
+    suspend fun updateAnnouncement(announcement: Announcement): Boolean
+    suspend fun deleteAnnouncement(announcement: Announcement): Boolean
     suspend fun syncAnnouncementsWithCloud()
 }

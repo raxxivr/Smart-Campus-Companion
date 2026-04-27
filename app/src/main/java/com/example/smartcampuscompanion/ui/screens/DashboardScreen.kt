@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -51,6 +52,9 @@ fun DashboardScreen(
     onCalendarClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var selectedAnnouncement by remember { mutableStateOf<Announcement?>(null) }
+    val readAnnouncementIds by announcementViewModel.readAnnouncementIds.collectAsState()
+
     Scaffold(
         topBar = {
             Column {
@@ -101,8 +105,21 @@ fun DashboardScreen(
             onCalendarClick = onCalendarClick,
             onAnnouncementsClick = onAnnouncementsClick,
             onCampusInfoClick = onCampusInfoClick,
+            onAnnouncementClick = { announcement ->
+                selectedAnnouncement = announcement
+                if (!readAnnouncementIds.contains(announcement.id)) {
+                    announcementViewModel.markAsRead(announcement.id)
+                }
+            },
             modifier = Modifier.padding(innerPadding)
         )
+
+        selectedAnnouncement?.let { announcement ->
+            AnnouncementDetailDialog(
+                announcement = announcement,
+                onDismiss = { selectedAnnouncement = null }
+            )
+        }
     }
 }
 
@@ -117,6 +134,7 @@ fun DashboardContent(
     onCalendarClick: () -> Unit,
     onAnnouncementsClick: () -> Unit,
     onCampusInfoClick: () -> Unit,
+    onAnnouncementClick: (Announcement) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val tasks by taskViewModel.allTasks.collectAsState()
@@ -173,7 +191,6 @@ fun DashboardContent(
             )
         }
 
-        // Campus Info Preview Section
         item {
             Column {
                 SectionHeader(
@@ -214,7 +231,7 @@ fun DashboardContent(
                         AnnouncementItem(
                             announcement = announcement,
                             isRead = false,
-                            onMarkAsRead = { /* Dashboard items usually redirect to full list */ }
+                            onClick = { onAnnouncementClick(announcement) }
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -255,7 +272,6 @@ fun CalendarWidget(
                 modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Date Section
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
@@ -278,7 +294,6 @@ fun CalendarWidget(
 
                 Spacer(modifier = Modifier.width(20.dp))
 
-                // Tasks Section
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         if (isTomorrow) "TOMORROW'S TASK" else "TODAY'S SCHEDULE",
@@ -431,14 +446,15 @@ fun SectionHeader(title: String, onViewAllClick: () -> Unit) {
 }
 
 @Composable
-fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: () -> Unit) {
+fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onClick: () -> Unit) {
     val backgroundColor = if (isRead) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface
     val contentAlpha = if (isRead) 0.6f else 1f
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         elevation = CardDefaults.cardElevation(if (isRead) 0.dp else 1.dp)
@@ -508,7 +524,7 @@ fun AnnouncementItem(announcement: Announcement, isRead: Boolean, onMarkAsRead: 
                         fontWeight = FontWeight.Bold
                     )
                     Icon(
-                        Icons.Default.ArrowRight,
+                        Icons.AutoMirrored.Filled.ArrowRight,
                         contentDescription = null,
                         tint = TealPrimary,
                         modifier = Modifier.size(16.dp)

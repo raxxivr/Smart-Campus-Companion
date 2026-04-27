@@ -1,5 +1,6 @@
 package com.example.smartcampuscompanion.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,17 +8,18 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.smartcampuscompanion.domain.model.Announcement
 import com.example.smartcampuscompanion.ui.theme.TealPrimary
 import com.example.smartcampuscompanion.ui.theme.TealSecondary
@@ -34,8 +36,12 @@ fun AdminDashboardScreen(
 ) {
     var showDialog by remember { mutableStateOf(false) }
     var announcementToEdit by remember { mutableStateOf<Announcement?>(null) }
+    var announcementToDelete by remember { mutableStateOf<Announcement?>(null) }
+    
+    val context = LocalContext.current
 
     Scaffold(
+        modifier = modifier,
         topBar = {
             TopAppBar(
                 title = {
@@ -47,7 +53,7 @@ fun AdminDashboardScreen(
                 },
                 actions = {
                     IconButton(onClick = onLogoutClick) {
-                        Icon(Icons.Default.Logout, contentDescription = "Logout", tint = Color.Red)
+                        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", tint = Color.Red)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -89,6 +95,9 @@ fun AdminDashboardScreen(
                 onEdit = { announcement ->
                     announcementToEdit = announcement
                     showDialog = true
+                },
+                onDelete = { announcement ->
+                    announcementToDelete = announcement
                 }
             )
         }
@@ -97,16 +106,54 @@ fun AdminDashboardScreen(
     if (showDialog) {
         AdminAnnouncementDialog(
             announcement = announcementToEdit,
-            onDismiss = { showDialog = false },
+            onDismiss = { 
+                showDialog = false
+                announcementToEdit = null
+            },
             onConfirm = { title, desc ->
                 if (announcementToEdit == null) {
-                    announcementViewModel.postAnnouncement(title, desc)
+                    announcementViewModel.postAnnouncement(title, desc) { success ->
+                        if (success) Toast.makeText(context, "Announcement Posted!", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(context, "Failed to post announcement", Toast.LENGTH_SHORT).show()
+                    }
                 } else {
-                    announcementViewModel.updateAnnouncement(
-                        announcementToEdit!!.copy(title = title, description = desc)
-                    )
+                    val updated = announcementToEdit!!.copy(title = title, description = desc)
+                    announcementViewModel.updateAnnouncement(updated) { success ->
+                        if (success) Toast.makeText(context, "Announcement Updated!", Toast.LENGTH_SHORT).show()
+                        else Toast.makeText(context, "Failed to update announcement", Toast.LENGTH_SHORT).show()
+                    }
                 }
                 showDialog = false
+                announcementToEdit = null
+            }
+        )
+    }
+
+    if (announcementToDelete != null) {
+        AlertDialog(
+            onDismissRequest = { announcementToDelete = null },
+            title = { Text("Confirm Deletion") },
+            text = { Text("Are you sure you want to delete this announcement? This action cannot be undone.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        announcementToDelete?.let { announcement ->
+                            announcementViewModel.deleteAnnouncement(announcement) { success ->
+                                if (success) Toast.makeText(context, "Deleted Successfully", Toast.LENGTH_SHORT).show()
+                                else Toast.makeText(context, "Failed to delete", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        announcementToDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { announcementToDelete = null }) {
+                    Text("Cancel")
+                }
             }
         )
     }
@@ -155,7 +202,8 @@ fun AdminStatsHeader(adminName: String) {
 @Composable
 fun AnnouncementManagementList(
     viewModel: AnnouncementViewModel,
-    onEdit: (Announcement) -> Unit
+    onEdit: (Announcement) -> Unit,
+    onDelete: (Announcement) -> Unit
 ) {
     val announcements by viewModel.allAnnouncements.collectAsState()
 
@@ -171,7 +219,7 @@ fun AnnouncementManagementList(
             items(announcements) { announcement ->
                 AdminAnnouncementCard(
                     announcement = announcement,
-                    onDelete = { viewModel.deleteAnnouncement(announcement) },
+                    onDelete = { onDelete(announcement) },
                     onEdit = { onEdit(announcement) }
                 )
             }
@@ -198,7 +246,7 @@ fun AdminAnnouncementCard(announcement: Announcement, onDelete: () -> Unit, onEd
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     maxLines = 1,
-                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis
                 )
             }
             IconButton(onClick = onEdit) {

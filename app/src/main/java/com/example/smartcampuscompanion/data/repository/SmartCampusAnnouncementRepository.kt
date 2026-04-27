@@ -6,7 +6,6 @@ import com.example.smartcampuscompanion.data.mapper.toEntity
 import com.example.smartcampuscompanion.domain.model.Announcement
 import com.example.smartcampuscompanion.domain.repository.AnnouncementRepository
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -27,38 +26,63 @@ class SmartCampusAnnouncementRepository(
         }
     }
 
-    override suspend fun postAnnouncement(announcement: Announcement) {
-        try {
-            // Use a map for Firestore to ensure correct serialization and avoid data class issues
+    override suspend fun postAnnouncement(announcement: Announcement): Boolean {
+        return try {
             val data = mapOf(
                 "title" to announcement.title,
                 "description" to announcement.description,
                 "date" to announcement.date
             )
             firestore.collection("announcements").add(data).await()
+            true
         } catch (e: Exception) {
-            // Handle error
+            false
         }
     }
 
-    override suspend fun deleteAnnouncement(announcement: Announcement) {
-        try {
-            // Find the specific document in Firestore to delete it
-            val snapshot = firestore.collection("announcements")
-                .whereEqualTo("title", announcement.title)
-                .whereEqualTo("description", announcement.description)
-                .get().await()
-            
-            for (doc in snapshot.documents) {
-                doc.reference.delete().await()
+    override suspend fun updateAnnouncement(announcement: Announcement): Boolean {
+        return try {
+            if (announcement.firestoreId.isEmpty()) return false
+            val data = mapOf(
+                "title" to announcement.title,
+                "description" to announcement.description,
+                "date" to announcement.date
+            )
+            firestore.collection("announcements")
+                .document(announcement.firestoreId)
+                .update(data)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    override suspend fun deleteAnnouncement(announcement: Announcement): Boolean {
+        return try {
+            if (announcement.firestoreId.isNotEmpty()) {
+                firestore.collection("announcements")
+                    .document(announcement.firestoreId)
+                    .delete()
+                    .await()
+                true
+            } else {
+                val snapshot = firestore.collection("announcements")
+                    .whereEqualTo("title", announcement.title)
+                    .whereEqualTo("description", announcement.description)
+                    .get().await()
+                
+                for (doc in snapshot.documents) {
+                    doc.reference.delete().await()
+                }
+                true
             }
         } catch (e: Exception) {
-            // Handle error
+            false
         }
     }
 
     override suspend fun syncAnnouncementsWithCloud() {
-        // Setup real-time listener with manual mapping to prevent deserialization crashes
         firestore.collection("announcements")
             .addSnapshotListener { snapshot, error ->
                 if (error != null || snapshot == null) return@addSnapshotListener
@@ -66,8 +90,8 @@ class SmartCampusAnnouncementRepository(
                 val cloudData = snapshot.documents.mapNotNull { doc ->
                     try {
                         Announcement(
-                            // Map the Firestore unique string ID to a unique local Int ID
                             id = doc.id.hashCode(),
+                            firestoreId = doc.id,
                             title = doc.getString("title") ?: "",
                             description = doc.getString("description") ?: "",
                             date = doc.getString("date") ?: ""
@@ -79,13 +103,11 @@ class SmartCampusAnnouncementRepository(
                 
                 repositoryScope.launch {
                     try {
-                        // Ensure local database exactly matches cloud state
                         announcementDao.deleteAllAnnouncements()
                         cloudData.forEach { announcement ->
                             announcementDao.insert(announcement.toEntity())
                         }
                     } catch (e: Exception) {
-                        // Handle local DB error
                     }
                 }
             }

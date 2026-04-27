@@ -47,25 +47,24 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         _readAnnouncementIds.value = emptySet()
     }
 
-    fun postAnnouncement(title: String, description: String) {
+    fun postAnnouncement(title: String, description: String, onResult: (Boolean) -> Unit) {
         val currentDate = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date())
         viewModelScope.launch {
-            repository.postAnnouncement(
+            val success = repository.postAnnouncement(
                 Announcement(
                     title = title,
                     description = description,
                     date = currentDate
                 )
             )
+            onResult(success)
         }
     }
 
-    fun updateAnnouncement(announcement: Announcement) {
+    fun updateAnnouncement(announcement: Announcement, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            // Update logic here. Assuming the repository has an update method.
-            // For now, we reuse postAnnouncement logic if it handles REPLACE, 
-            // but ideally we call repository.updateTask equivalent for Announcements.
-            repository.postAnnouncement(announcement)
+            val success = repository.updateAnnouncement(announcement)
+            onResult(success)
         }
     }
 
@@ -76,9 +75,10 @@ class AnnouncementViewModel(private val repository: AnnouncementRepository) : Vi
         }
     }
 
-    fun deleteAnnouncement(announcement: Announcement) {
+    fun deleteAnnouncement(announcement: Announcement, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            repository.deleteAnnouncement(announcement)
+            val success = repository.deleteAnnouncement(announcement)
+            onResult(success)
         }
     }
 }

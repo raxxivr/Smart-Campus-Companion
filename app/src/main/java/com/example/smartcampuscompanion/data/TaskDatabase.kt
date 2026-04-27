@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [Task::class, User::class, Announcement::class, ReadAnnouncement::class], version = 8, exportSchema = false)
+@Database(entities = [Task::class, User::class, Announcement::class, ReadAnnouncement::class], version = 9, exportSchema = false)
 abstract class TaskDatabase : RoomDatabase() {
 
     abstract fun taskDao(): TaskDao
@@ -62,6 +62,13 @@ abstract class TaskDatabase : RoomDatabase() {
             }
         }
 
+        // Migration from 8 to 9: adds the 'firestoreId' column to the 'announcements' table
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE announcements ADD COLUMN firestoreId TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         fun getDatabase(context: Context): TaskDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -69,8 +76,8 @@ abstract class TaskDatabase : RoomDatabase() {
                     TaskDatabase::class.java,
                     "task_database"
                 )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
-                .fallbackToDestructiveMigration() // Added this to avoid crashes during development if migration fails
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance
