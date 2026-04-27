@@ -195,6 +195,7 @@ class MainActivity : ComponentActivity() {
                                         },
                                         onGoogleSignInClick = {
                                             scope.launch {
+                                                loginViewModel.setLoading(true)
                                                 val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
                                                     .setFilterByAuthorizedAccounts(false)
                                                     .setServerClientId("1019161334414-dfkotnvcne1a7e1jmqi88ubm6dkljqt5.apps.googleusercontent.com")
@@ -210,6 +211,7 @@ class MainActivity : ComponentActivity() {
                                                     val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(result.credential.data)
                                                     loginViewModel.loginWithGoogle(googleIdTokenCredential.idToken)
                                                 } catch (e: Exception) {
+                                                    loginViewModel.setLoading(false)
                                                     Toast.makeText(context, "Google Sign-In failed: ${e.message}", Toast.LENGTH_SHORT).show()
                                                 }
                                             }

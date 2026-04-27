@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.smartcampuscompanion.data.SessionManager
 import com.example.smartcampuscompanion.domain.model.User
 import com.example.smartcampuscompanion.domain.repository.UserRepository
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class LoginViewModel(
@@ -38,6 +39,10 @@ class LoginViewModel(
     private val _role = mutableStateOf(sessionManager.getRole())
     val role: String? get() = _role.value
 
+    fun setLoading(loading: Boolean) {
+        _isLoading.value = loading
+    }
+
     fun login(email: String, password: String) {
         val trimmedEmail = email.trim()
         val trimmedPassword = password.trim()
@@ -47,6 +52,7 @@ class LoginViewModel(
             
             // Hardcoded Admin check
             if (trimmedEmail == "admin@smartcampus.com" && trimmedPassword == "admin123") {
+                delay(800) // Simulate network for UX
                 sessionManager.createLoginSession(
                     fullName = "Admin",
                     email = trimmedEmail,
@@ -142,6 +148,7 @@ class LoginViewModel(
     fun logout() {
         viewModelScope.launch {
             _isLoading.value = true
+            delay(1000) // Give user time to see the loading effect
             userRepository.logout()
             sessionManager.logout()
             _currentUserFullName.value = null

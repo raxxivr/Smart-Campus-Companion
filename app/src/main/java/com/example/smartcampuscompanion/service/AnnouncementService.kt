@@ -16,6 +16,7 @@ import androidx.core.app.NotificationCompat
 import com.example.smartcampuscompanion.MainActivity
 import com.example.smartcampuscompanion.R
 import com.example.smartcampuscompanion.data.SessionManager
+import com.example.smartcampuscompanion.data.repository.UserPreferencesRepository
 import com.example.smartcampuscompanion.domain.model.Announcement
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -26,12 +27,15 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class AnnouncementService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private lateinit var firestore: FirebaseFirestore
     private lateinit var sessionManager: SessionManager
+    private lateinit var userPreferencesRepository: UserPreferencesRepository
     private var announcementListener: ListenerRegistration? = null
     private var isFirstSnapshot = true
     
@@ -43,6 +47,7 @@ class AnnouncementService : Service() {
         super.onCreate()
         firestore = Firebase.firestore
         sessionManager = SessionManager(this)
+        userPreferencesRepository = UserPreferencesRepository(this)
         createNotificationChannels()
     }
 
@@ -61,7 +66,6 @@ class AnnouncementService : Service() {
     }
 
     private fun startListeningForAnnouncements() {
-        // Prevent multiple listeners if onStartCommand is called repeatedly
         if (announcementListener != null) return
 
         isFirstSnapshot = true
@@ -73,31 +77,36 @@ class AnnouncementService : Service() {
                 }
 
                 if (snapshots != null) {
-                    // Check if the current user is an admin via SessionManager and Firebase Auth
                     val currentUser = FirebaseAuth.getInstance().currentUser
                     val adminEmail = "admin@smartcampus.com"
                     val isAdmin = currentUser?.email == adminEmail || sessionManager.getRole() == "ADMIN"
 
-                    for (dc in snapshots.documentChanges) {
-                        if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
-                            // Conditions to show notification:
-                            // 1. Not the initial batch of documents (isFirstSnapshot == false)
-                            // 2. The user is NOT an admin
-                            // 3. The change did NOT originate locally (metadata.hasPendingWrites == false)
-                            if (!isFirstSnapshot && !isAdmin && !dc.document.metadata.hasPendingWrites()) {
-                                val doc = dc.document
-                                val announcement = Announcement(
-                                    id = doc.id.hashCode(),
-                                    firestoreId = doc.id,
-                                    title = doc.getString("title") ?: "",
-                                    description = doc.getString("description") ?: "",
-                                    date = doc.getString("date") ?: ""
-                                )
-                                showNewAnnouncementNotification(announcement)
+                    serviceScope.launch {
+                        // Check if notifications are enabled in user preferences
+                        val notificationsEnabled = userPreferencesRepository.notificationsFlow.first()
+
+                        for (dc in snapshots.documentChanges) {
+                            if (dc.type == com.google.firebase.firestore.DocumentChange.Type.ADDED) {
+                                // Conditions to show notification:
+                                // 1. Not the initial batch (old announcements)
+                                // 2. User is NOT an admin
+                                // 3. Notifications are enabled in Settings
+                                // 4. Change didn't originate locally (pending writes)
+                                if (!isFirstSnapshot && !isAdmin && notificationsEnabled && !dc.document.metadata.hasPendingWrites()) {
+                                    val doc = dc.document
+                                    val announcement = Announcement(
+                                        id = doc.id.hashCode(),
+                                        firestoreId = doc.id,
+                                        title = doc.getString("title") ?: "",
+                                        description = doc.getString("description") ?: "",
+                                        date = doc.getString("date") ?: ""
+                                    )
+                                    showNewAnnouncementNotification(announcement)
+                                }
                             }
                         }
+                        isFirstSnapshot = false
                     }
-                    isFirstSnapshot = false
                 }
             }
     }

@@ -83,6 +83,7 @@ fun StyledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    isLoading: Boolean = false,
     containerColor: Color = TealPrimary,
     contentColor: Color = Color.White
 ) {
@@ -91,18 +92,28 @@ fun StyledButton(
         modifier = modifier
             .fillMaxWidth()
             .height(50.dp),
-        enabled = enabled,
+        enabled = enabled && !isLoading,
         shape = MaterialTheme.shapes.medium,
         colors = ButtonDefaults.buttonColors(
             containerColor = containerColor,
-            contentColor = contentColor
+            contentColor = contentColor,
+            disabledContainerColor = containerColor.copy(alpha = 0.6f),
+            disabledContentColor = contentColor.copy(alpha = 0.6f)
         )
     ) {
-        Text(
-            text = text,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
-        )
+        if (isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                color = contentColor,
+                strokeWidth = 2.dp
+            )
+        } else {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp
+            )
+        }
     }
 }

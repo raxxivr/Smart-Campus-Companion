@@ -68,7 +68,7 @@ fun DashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(
-                                "Smart Campus",
+                                "Smart Campus Companion",
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold,
                                 color = TealPrimary

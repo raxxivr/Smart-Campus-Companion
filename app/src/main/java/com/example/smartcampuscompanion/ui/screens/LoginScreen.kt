@@ -47,16 +47,25 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    var isGoogleLoginInProgress by remember { mutableStateOf(false) }
     
     val loginError by viewModel.loginError
     val isLoading by viewModel.isLoading
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
+    // Reset the internal Google loading state when ViewModel loading finishes
+    LaunchedEffect(isLoading) {
+        if (!isLoading) {
+            isGoogleLoginInProgress = false
+        }
+    }
+
     LaunchedEffect(loginError) {
         loginError?.let {
             Toast.makeText(context, it, Toast.LENGTH_LONG).show()
             viewModel.clearError()
+            isGoogleLoginInProgress = false
         }
     }
 
@@ -106,6 +115,7 @@ fun LoginScreen(
                     focusManager.clearFocus()
                     onLoginClick(email, password)
                 },
+                isLoading = isLoading && !isGoogleLoginInProgress,
                 enabled = !isLoading && email.isNotBlank() && password.isNotBlank()
             )
 
@@ -130,20 +140,23 @@ fun LoginScreen(
 
             // Google Sign In Button
             OutlinedButton(
-                onClick = onGoogleSignInClick,
+                onClick = {
+                    isGoogleLoginInProgress = true
+                    onGoogleSignInClick()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(12.dp),
                 border = BorderStroke(1.dp, Color.LightGray.copy(alpha = 0.5f)),
-                enabled = !isLoading
+                enabled = !isLoading && !isGoogleLoginInProgress
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.Center,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (isLoading) {
+                    if (isGoogleLoginInProgress) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(24.dp),
                             color = TealPrimary,
@@ -157,7 +170,7 @@ fun LoginScreen(
                         )
                     } else {
                         Icon(
-                            painter = painterResource(id = R.drawable.ic_google_logo), // Placeholder
+                            painter = painterResource(id = R.drawable.ic_google_logo),
                             contentDescription = "Google Logo",
                             modifier = Modifier.size(24.dp),
                             tint = Color.Unspecified
@@ -182,7 +195,10 @@ fun LoginScreen(
     if (loginError != null) {
         ErrorDialog(
             message = loginError!!,
-            onDismiss = { viewModel.clearError() }
+            onDismiss = { 
+                viewModel.clearError()
+                isGoogleLoginInProgress = false
+            }
         )
     }
 }
