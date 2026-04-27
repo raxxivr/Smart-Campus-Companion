@@ -58,15 +58,10 @@ fun TaskManagerScreen(
             Column {
                 TopAppBar(
                     title = { 
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = onBackClick) {
-                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = TealPrimary)
-                            }
-                            Text(
-                                "Task Manager", 
-                                fontWeight = FontWeight.Bold
-                            ) 
-                        }
+                        Text(
+                            "Task Manager", 
+                            fontWeight = FontWeight.Bold
+                        ) 
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.surface,
